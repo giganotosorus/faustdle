@@ -8,18 +8,19 @@
 </head>
 <body>
     <div class="container">
-        <h1>One Piece Character Guessing Game</h1>
+        <h1>Faustdle</h1>
         
         <div id="game-setup" class="game-section">
+            <h2>Choose a game mode:</h2>
+            <div class="button-group">
+                <button onclick="startGame(false)" class="btn">Normal Mode</button>
+                <button onclick="startGame(true)" class="btn btn-hard">Hard Mode</button>
+                <button onclick="startDailyGame()" class="btn btn-daily">Daily Character</button>
+            </div>
+            <h2>Or enter a predetermined seed:</h2>
             <div class="input-group">
                 <input type="text" id="seed-input" placeholder="Enter seed (optional)">
                 <button onclick="startGameWithSeed()" class="btn">Start with Seed</button>
-            </div>
-            <p>Or choose a game mode:</p>
-            <div class="button-group">
-                <button onclick="startGame(true)" class="btn">Hard Mode</button>
-                <button onclick="startGame(false)" class="btn">Easy Mode</button>
-                <button onclick="startDailyGame()" class="btn btn-daily">Daily Character</button>
             </div>
         </div>
 
@@ -45,6 +46,7 @@
                             <th>Origin</th>
                             <th>Arc</th>
                             <th>Status</th>
+                            <th>Occupation</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
