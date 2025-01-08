@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One Piece Character Guessing Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>One Piece Character Guessing Game</h1>
+        
+        <div id="game-setup" class="game-section">
+            <div class="input-group">
+                <input type="text" id="seed-input" placeholder="Enter seed (optional)">
+                <button onclick="startGameWithSeed()" class="btn">Start with Seed</button>
+            </div>
+            <p>Or choose a game mode:</p>
+            <div class="button-group">
+                <button onclick="startGame(true)" class="btn">Hard Mode</button>
+                <button onclick="startGame(false)" class="btn">Easy Mode</button>
+                <button onclick="startDailyGame()" class="btn btn-daily">Daily Character</button>
+            </div>
+        </div>
+
+        <div id="game-play" class="game-section hidden">
+            <div class="input-group">
+                <div class="autocomplete-wrapper">
+                    <input type="text" id="guess-input" placeholder="Enter character name...">
+                </div>
+                <button onclick="makeGuess()" class="btn">Guess</button>
+            </div>
+            
+            <div id="results" class="results">
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Affiliation</th>
+                            <th>Devil Fruit</th>
+                            <th>Haki</th>
+                            <th>Bounty</th>
+                            <th>Height</th>
+                            <th>Origin</th>
+                            <th>Arc</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="game-over" class="game-section hidden">
+            <h2>Congratulations!</h2>
+            <p>You found the correct character!</p>
+            <p>Seed for this game: <span id="game-seed" class="seed"></span></p>
+            <pre id="emoji-grid" class="emoji-grid"></pre>
+            <button onclick="resetGame()" class="btn">Play Again</button>
+        </div>
+    </div>
+    <script type="module" src="index.js"></script>
+</body>
+</html>
