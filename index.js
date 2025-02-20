@@ -7,52 +7,99 @@ class GameApp {
         this.currentSeed = null;
         this.guessHistory = [];
         this.setupEventListeners();
+        console.log('GameApp initialized');
     }
 
     setupEventListeners() {
         console.log('Setting up event listeners');
         
         // Game mode buttons
-        document.getElementById('normal-mode').addEventListener('click', () => {
-            console.log('Normal mode button clicked');
-            this.startGame(false);
-        });
-        document.getElementById('hard-mode').addEventListener('click', () => {
-            console.log('Hard mode button clicked');
-            this.startGame(true);
-        });
-        document.getElementById('daily-mode').addEventListener('click', () => {
-            console.log('Daily mode button clicked');
-            this.startDailyGame();
-        });
-        document.getElementById('seed-start').addEventListener('click', () => {
-            console.log('Seed start button clicked');
-            this.startGameWithSeed();
-        });
-        document.getElementById('guess-button').addEventListener('click', () => {
-            console.log('Guess button clicked');
-            this.makeGuess();
-        });
-        document.getElementById('play-again').addEventListener('click', () => {
-            console.log('Play again button clicked');
-            this.resetGame();
-        });
+        const normalModeButton = document.getElementById('normal-mode');
+        const hardModeButton = document.getElementById('hard-mode');
+        const dailyModeButton = document.getElementById('daily-mode');
+        const seedStartButton = document.getElementById('seed-start');
+        const guessButton = document.getElementById('guess-button');
+        const playAgainButton = document.getElementById('play-again');
+
+        if (normalModeButton) {
+            normalModeButton.addEventListener('click', () => {
+                console.log('Normal mode button clicked');
+                this.startGame(false);
+            });
+        } else {
+            console.log('Normal mode button not found');
+        }
+
+        if (hardModeButton) {
+            hardModeButton.addEventListener('click', () => {
+                console.log('Hard mode button clicked');
+                this.startGame(true);
+            });
+        } else {
+            console.log('Hard mode button not found');
+        }
+
+        if (dailyModeButton) {
+            dailyModeButton.addEventListener('click', () => {
+                console.log('Daily mode button clicked');
+                this.startDailyGame();
+            });
+        } else {
+            console.log('Daily mode button not found');
+        }
+
+        if (seedStartButton) {
+            seedStartButton.addEventListener('click', () => {
+                console.log('Seed start button clicked');
+                this.startGameWithSeed();
+            });
+        } else {
+            console.log('Seed start button not found');
+        }
+
+        if (guessButton) {
+            guessButton.addEventListener('click', () => {
+                console.log('Guess button clicked');
+                this.makeGuess();
+            });
+        } else {
+            console.log('Guess button not found');
+        }
+
+        if (playAgainButton) {
+            playAgainButton.addEventListener('click', () => {
+                console.log('Play again button clicked');
+                this.resetGame();
+            });
+        } else {
+            console.log('Play again button not found');
+        }
 
         // Setup guess input enter key
-        document.getElementById('guess-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                console.log('Enter key pressed in guess input');
-                this.makeGuess();
-            }
-        });
+        const guessInput = document.getElementById('guess-input');
+        if (guessInput) {
+            guessInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    console.log('Enter key pressed in guess input');
+                    this.makeGuess();
+                }
+            });
+        } else {
+            console.log('Guess input not found');
+        }
 
         // Setup seed input enter key
-        document.getElementById('seed-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                console.log('Enter key pressed in seed input');
-                this.startGameWithSeed();
-            }
-        });
+        const seedInput = document.getElementById('seed-input');
+        if (seedInput) {
+            seedInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    console.log('Enter key pressed in seed input');
+                    this.startGameWithSeed();
+                }
+            });
+        } else {
+            console.log('Seed input not found');
+        }
     }
 
     getDailySeed() {
