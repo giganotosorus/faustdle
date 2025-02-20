@@ -13,14 +13,14 @@
         <div id="game-setup" class="game-section">
             <h2>Choose a game mode:</h2>
             <div class="button-group">
-                <button onclick="window.gameApp.startGame(false)" class="btn">Normal Mode</button>
-                <button onclick="window.gameApp.startGame(true)" class="btn btn-hard">Hard Mode</button>
-                <button onclick="window.gameApp.startDailyGame()" class="btn btn-daily">Daily Character</button>
+                <button id="normal-mode" class="btn">Normal Mode</button>
+                <button id="hard-mode" class="btn btn-hard">Hard Mode</button>
+                <button id="daily-mode" class="btn btn-daily">Daily Character</button>
             </div>
             <h2>Or enter a predetermined seed:</h2>
             <div class="input-group">
                 <input type="text" id="seed-input" placeholder="Enter seed (optional)">
-                <button onclick="window.gameApp.startGameWithSeed()" class="btn">Start with Seed</button>
+                <button id="seed-start" class="btn">Start with Seed</button>
             </div>
         </div>
 
@@ -29,7 +29,7 @@
                 <div class="autocomplete-wrapper">
                     <input type="text" id="guess-input" placeholder="Enter character name...">
                 </div>
-                <button onclick="window.gameApp.makeGuess()" class="btn">Guess</button>
+                <button id="guess-button" class="btn">Guess</button>
             </div>
             
             <div id="results" class="results">
@@ -59,7 +59,7 @@
             <p>You found the correct character!</p>
             <p>Seed for this game: <span id="game-seed" class="seed"></span></p>
             <pre id="emoji-grid" class="emoji-grid"></pre>
-            <button onclick="window.gameApp.resetGame()" class="btn">Play Again</button>
+            <button id="play-again" class="btn">Play Again</button>
         </div>
     </div>
     <script type="module" src="index.js"></script>

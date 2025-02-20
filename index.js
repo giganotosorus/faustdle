@@ -2,25 +2,49 @@ import { names, arcs, haki } from './data/characters.js';
 import { compareTraits } from './utils/gameLogic.js';
 import seedrandom from 'seedrandom';
 
-// Create a global game object
-const gameApp = {
-    chosenCharacter: null,
-    currentSeed: null,
-    guessHistory: [],
+class GameApp {
+    constructor() {
+        this.chosenCharacter = null;
+        this.currentSeed = null;
+        this.guessHistory = [];
+        this.setupEventListeners();
+    }
 
-    // Get daily seed based on UTC date
+    setupEventListeners() {
+        // Game mode buttons
+        document.getElementById('normal-mode').addEventListener('click', () => this.startGame(false));
+        document.getElementById('hard-mode').addEventListener('click', () => this.startGame(true));
+        document.getElementById('daily-mode').addEventListener('click', () => this.startDailyGame());
+        document.getElementById('seed-start').addEventListener('click', () => this.startGameWithSeed());
+        document.getElementById('guess-button').addEventListener('click', () => this.makeGuess());
+        document.getElementById('play-again').addEventListener('click', () => this.resetGame());
+
+        // Setup guess input enter key
+        document.getElementById('guess-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.makeGuess();
+            }
+        });
+
+        // Setup seed input enter key
+        document.getElementById('seed-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.startGameWithSeed();
+            }
+        });
+    }
+
     getDailySeed() {
         const date = new Date();
         return `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`;
-    },
+    }
 
     startDailyGame() {
         this.currentSeed = this.getDailySeed();
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
-        // Force easy mode (false) for daily challenge
         this.chosenCharacter = this.selectRandomCharacter(false, this.currentSeed);
-    },
+    }
 
     startGameWithSeed() {
         const seedInput = document.getElementById('seed-input');
@@ -32,18 +56,17 @@ const gameApp = {
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
         this.chosenCharacter = this.selectRandomCharacter(false, this.currentSeed);
-    },
+    }
 
     startGame(hardMode) {
         this.currentSeed = Math.floor(Math.random() * 1000000).toString();
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
         this.chosenCharacter = this.selectRandomCharacter(hardMode, this.currentSeed);
-    },
+    }
 
     generateEmojiGrid() {
         let grid = '';
-        // Reverse the order of guessHistory for display
         [...this.guessHistory].reverse().forEach(guess => {
             guess.forEach(result => {
                 if (result.match) {
@@ -59,7 +82,7 @@ const gameApp = {
             grid += '\n';
         });
         return grid;
-    },
+    }
 
     makeGuess() {
         const guessInput = document.getElementById('guess-input');
@@ -85,7 +108,7 @@ const gameApp = {
         this.guessHistory.push(results);
         this.displayResultsUI(guess, results);
         guessInput.value = '';
-    },
+    }
 
     resetGame() {
         document.getElementById('game-over').classList.add('hidden');
@@ -96,7 +119,7 @@ const gameApp = {
         this.chosenCharacter = null;
         this.currentSeed = null;
         this.guessHistory = [];
-    },
+    }
 
     selectRandomCharacter(hardMode, seed) {
         const rng = seedrandom(seed);
@@ -111,7 +134,7 @@ const gameApp = {
         } while (!hardMode && selectedTraits[9] === 'h');
         
         return { name: selectedName, traits: selectedTraits };
-    },
+    }
 
     displayResultsUI(guessName, results) {
         const tbody = document.getElementById('results-table').querySelector('tbody');
@@ -137,7 +160,7 @@ const gameApp = {
         });
         
         tbody.insertBefore(row, tbody.firstChild);
-    },
+    }
 
     setupAutocomplete() {
         const guessInput = document.getElementById('guess-input');
@@ -166,19 +189,16 @@ const gameApp = {
             }
         });
 
-        // Hide autocomplete when clicking outside
         document.addEventListener('click', (e) => {
             if (!guessInput.contains(e.target)) {
                 autocompleteList.innerHTML = '';
             }
         });
     }
-};
+}
 
-// Initialize the game
+// Initialize the game when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    gameApp.setupAutocomplete();
+    const game = new GameApp();
+    game.setupAutocomplete();
 });
-
-// Make the game object globally available
-window.gameApp = gameApp;
