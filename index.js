@@ -141,13 +141,13 @@ class GameApp {
         [...this.guessHistory].reverse().forEach(guess => {
             guess.forEach(result => {
                 if (result.match) {
-                    grid += '\ud83d\udfe9';
+                    grid += '\ud83d\udfe9'; // Green square emoji
                 } else if (result.direction === 'up') {
-                    grid += '\u2b06\ufe0f';
+                    grid += '\u2b06\ufe0f'; // Up arrow emoji
                 } else if (result.direction === 'down') {
-                    grid += '\u2b07\ufe0f';
+                    grid += '\u2b07\ufe0f'; // Down arrow emoji
                 } else {
-                    grid += '\ud83d\udfe5';
+                    grid += '\ud83d\udfe5'; // Red square emoji
                 }
             });
             grid += '\\n';
