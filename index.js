@@ -1,6 +1,5 @@
 import { names, arcs, haki } from './data/characters.js';
 import { compareTraits } from './utils/gameLogic.js';
-import seedrandom from 'seedrandom';
 
 class GameApp {
     constructor() {
@@ -150,13 +149,13 @@ class GameApp {
 
     selectRandomCharacter(hardMode, seed) {
         console.log('Selecting random character', hardMode ? 'in hard mode' : '', 'with seed', seed);
-        const rng = seedrandom(seed);
+        Math.seedrandom(seed);
         const characterNames = Object.keys(names);
         let selectedName;
         let selectedTraits;
         
         do {
-            const index = Math.floor(rng() * characterNames.length);
+            const index = Math.floor(Math.random() * characterNames.length);
             selectedName = characterNames[index];
             selectedTraits = names[selectedName];
         } while (!hardMode && selectedTraits[9] === 'h');
