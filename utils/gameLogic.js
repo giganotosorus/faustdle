@@ -8,6 +8,15 @@ export function compareTraits(guessTraits, chosenTraits) {
   for (let i = 0; i < guessTraits.length; i++) {
     if (i === 9) continue; // Skip the last trait
     
+    // Special handling for bounty (index 4)
+    if (i === 4 && (guessTraits[i] === "1" || chosenTraits[i] === "1")) {
+      results.push({
+        match: false,
+        text: "Unknown Bounty"
+      });
+      continue;
+    }
+    
     if (guessTraits[i] === chosenTraits[i]) {
       results.push(createMatchResult(guessTraits[i], i));
     } else {
@@ -69,12 +78,6 @@ function createTextComparisonResult(trait, index) {
     return {
       match: false,
       text: getGenderText(trait)
-    };
-  }
-  
-  if (index === 4 && (guessTrait === "1")) {
-    return {
-      text: "Unknown Bounty"
     };
   }
   
