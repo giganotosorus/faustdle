@@ -72,9 +72,8 @@ function createTextComparisonResult(trait, index) {
     };
   }
   
-  if (index === 4) {
+  if (index === 4 && (guessTrait === "1")) {
     return {
-      match: 1,
       text: "Unknown Bounty"
     };
   }
