@@ -84,7 +84,7 @@ function createTextComparisonResult(trait, index) {
   if (index === 5) {
     return {
       match: false,
-      text: "Unknown Hight"
+      text: "Unknown Height"
     };
   }
   
