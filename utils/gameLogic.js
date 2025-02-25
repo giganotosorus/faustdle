@@ -75,14 +75,15 @@ function createTextComparisonResult(trait, index) {
   if (index === 4) {
     return {
       match: false,
-      text: "Chosen Character's Bounty is unknown"
+      match: 1,
+      text: "Unknown Bounty"
     };
   }
   
   if (index === 5) {
     return {
       match: false,
-      text: "Chosen Character's Height is unknown"
+      text: "Unknown Hight"
     };
   }
   
