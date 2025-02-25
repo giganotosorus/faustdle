@@ -74,7 +74,6 @@ function createTextComparisonResult(trait, index) {
   
   if (index === 4) {
     return {
-      match: false,
       match: 1,
       text: "Unknown Bounty"
     };
