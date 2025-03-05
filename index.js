@@ -312,12 +312,20 @@ class GameApp {
             alert('Please enter a seed value');
             return;
         }
-        this.gameMode = 'normal';
+
+        // Easter egg: Check for "imu" seed
+        if (seedInput.value.toLowerCase() === 'imu') {
+            // Reload the page
+            window.location.reload();
+            return;
+        }
+
+        this.gameMode = 'filler';
         this.currentSeed = seedInput.value;
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
         document.getElementById('skip-button').classList.remove('hidden');
-        this.chosenCharacter = this.selectRandomCharacter('normal', this.currentSeed);
+        this.chosenCharacter = this.selectRandomCharacter('filler', this.currentSeed);
         this.startElapsedTimer();
     }
 
