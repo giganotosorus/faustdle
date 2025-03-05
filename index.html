@@ -13,10 +13,12 @@
         
         <div id="game-setup" class="game-section">
             <h2>Choose a game mode:</h2>
-            <div class="button-group">
-                <button id="normal-mode" class="btn">Normal Mode</button>
-                <button id="hard-mode" class="btn btn-hard">Hard Mode</button>
-                <button id="filler-mode" class="btn btn-filler">Filler Mode</button>
+            <div class="mode-buttons">
+                <div class="main-modes">
+                    <button id="normal-mode" class="btn">Normal Mode</button>
+                    <button id="hard-mode" class="btn btn-hard">Hard Mode</button>
+                    <button id="filler-mode" class="btn btn-filler">Filler Mode</button>
+                </div>
                 <button id="daily-mode" class="btn btn-daily">Daily Character</button>
             </div>
             <h2>Or enter a predetermined seed:</h2>
@@ -63,7 +65,26 @@
             <p>The character was: <span id="correct-character" class="character-name"></span></p>
             <p>Seed for this game: <span id="game-seed" class="seed"></span></p>
             <div id="emoji-grid" class="emoji-grid"></div>
-            <div id="guess-distribution" class="guess-distribution"></div>
+            <div id="results-final" class="results">
+                <table id="results-table-final">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Affiliation</th>
+                            <th>Devil Fruit</th>
+                            <th>Haki</th>
+                            <th>Bounty</th>
+                            <th>Height</th>
+                            <th>Origin</th>
+                            <th>Arc</th>
+                            <th>Status</th>
+                            <th>Occupation</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
             <button id="play-again" class="btn">Play Again</button>
         </div>
     </div>

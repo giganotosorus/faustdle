@@ -15,7 +15,7 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
   background-image: url("https://media.discordapp.net/attachments/830888172467781682/1341941205294125058/1000.png?ex=67b7d3a3&is=67b68223&hm=b41e0e377146f20cd0018fc8b70da04efdfbdd4c27561083438cce08bb5a680d&=&format=webp&quality=lossless");
   background-size:cover;
-  background-color: #E4B372;
+  background-color: #f8fafc;
   color: var(--text-color);
   min-height: 100vh;
   display: flex;
@@ -78,7 +78,14 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.button-group {
+.mode-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.main-modes {
   display: flex;
   gap: 1rem;
   justify-content: center;
@@ -237,34 +244,6 @@ tr:hover {
   padding: 1rem;
   background: #E2BD8C;
   border-radius: 0.5rem;
-  text-align: center;
-}
-
-.guess-distribution {
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background: #E2BD8C;
-  border-radius: 0.5rem;
-}
-
-.guess-bar {
-  display: flex;
-  align-items: center;
-  margin: 0.5rem 0;
-}
-
-.guess-label {
-  min-width: 2rem;
-  text-align: right;
-  margin-right: 0.5rem;
-}
-
-.guess-count {
-  background: #24D475;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  min-width: 2rem;
   text-align: center;
 }
 

@@ -7,7 +7,6 @@ class GameApp {
         this.currentSeed = null;
         this.guessHistory = [];
         this.gameMode = null;
-        this.guessDistribution = new Array(10).fill(0);
         this.setupEventListeners();
         console.log('GameApp initialized');
     }
@@ -160,31 +159,11 @@ class GameApp {
         }).join('\n');
     }
 
-    updateGuessDistribution() {
-        const container = document.getElementById('guess-distribution');
-        container.innerHTML = '';
-        
-        const maxGuesses = Math.max(...this.guessDistribution);
-        
-        this.guessDistribution.forEach((count, index) => {
-            if (index === 0) return; // Skip index 0
-            
-            const bar = document.createElement('div');
-            bar.className = 'guess-bar';
-            
-            const label = document.createElement('div');
-            label.className = 'guess-label';
-            label.textContent = index;
-            
-            const countElement = document.createElement('div');
-            countElement.className = 'guess-count';
-            countElement.textContent = count;
-            countElement.style.width = `${(count / maxGuesses) * 100}%`;
-            
-            bar.appendChild(label);
-            bar.appendChild(countElement);
-            container.appendChild(bar);
-        });
+    copyResultsTable() {
+        const originalTable = document.getElementById('results-table');
+        const finalTable = document.getElementById('results-table-final');
+        const tbody = finalTable.querySelector('tbody');
+        tbody.innerHTML = originalTable.querySelector('tbody').innerHTML;
     }
 
     skipGame() {
@@ -196,7 +175,7 @@ class GameApp {
         document.getElementById('correct-character').textContent = this.chosenCharacter.name;
         document.getElementById('game-seed').textContent = this.currentSeed;
         document.getElementById('emoji-grid').textContent = this.generateEmojiGrid();
-        this.updateGuessDistribution();
+        this.copyResultsTable();
     }
 
     makeGuess() {
@@ -212,7 +191,6 @@ class GameApp {
         if (guess === this.chosenCharacter.name) {
             const results = compareTraits(names[guess], this.chosenCharacter.traits);
             this.guessHistory.push(results);
-            this.guessDistribution[this.guessHistory.length]++;
             
             document.getElementById('game-play').classList.add('hidden');
             document.getElementById('game-over').classList.remove('hidden');
@@ -220,7 +198,7 @@ class GameApp {
             document.getElementById('correct-character').textContent = this.chosenCharacter.name;
             document.getElementById('game-seed').textContent = this.currentSeed;
             document.getElementById('emoji-grid').textContent = this.generateEmojiGrid();
-            this.updateGuessDistribution();
+            this.copyResultsTable();
             return;
         }
         
@@ -236,8 +214,8 @@ class GameApp {
         document.getElementById('game-setup').classList.remove('hidden');
         document.getElementById('seed-input').value = '';
         document.getElementById('results-table').querySelector('tbody').innerHTML = '';
+        document.getElementById('results-table-final').querySelector('tbody').innerHTML = '';
         document.getElementById('emoji-grid').textContent = '';
-        document.getElementById('guess-distribution').innerHTML = '';
         this.chosenCharacter = null;
         this.currentSeed = null;
         this.guessHistory = [];
