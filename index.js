@@ -252,16 +252,16 @@ class GameApp {
         switch(mode) {
             case 'normal':
                 // Normal mode: only normal characters (no hard or filler)
-                return difficulty !== 'h' && difficulty !== 'f';
+                return difficulty === 'e';
             case 'hard':
                 // Hard mode: normal and hard characters (no filler)
-                return difficulty !== 'f';
+                return difficulty === 'e' || difficulty === 'h';
             case 'filler':
                 // Filler mode: all characters allowed
                 return true;
             default:
                 // Default to normal mode behavior
-                return difficulty !== 'h' && difficulty !== 'f';;
+                return difficulty === 'e';
         }
     }
 
