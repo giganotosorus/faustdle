@@ -13,7 +13,7 @@ body {
   margin: 0;
   padding: 2rem;
   font-family: system-ui, -apple-system, sans-serif;
-  background-image: url("https://media.discordapp.net/attachments/830888172467781682/1341941205294125058/1000.png?ex=67b7d3a3&is=67b68223&hm=b41e0e377146f20cd0018fc8b70da04efdfbdd4c27561083438cce08bb5a680d&=&format=webp&quality=lossless");
+  background-image: url("https://static.wikia.nocookie.net/onepiece/images/0/09/Chapter_863.png/revision/latest?cb=20170424163639");
   background-size:cover;
   background-color: #f8fafc;
   color: var(--text-color);
@@ -96,7 +96,7 @@ input:focus {
   padding: 1rem 1.5rem;
   border: none;
   border-radius: 0.5rem;
-  background: var(--primary-color);
+  background: #24D475;
   color: white;
   font-size: 1rem;
   font-weight: 600;
@@ -105,7 +105,7 @@ input:focus {
 }
 
 .btn:hover {
-  background: #980631;
+  background: #227047;
   transform: translateY(-1px);
 }
 
@@ -114,11 +114,11 @@ input:focus {
 }
 
 .btn-hard {
-  background: #24D475;
+  background: #F22E3C;
 }
 
 .btn-hard:hover {
-  background: #227047;
+  background: #980631;
 }
 
 .btn-filler {

@@ -4,8 +4,8 @@ export function formatText(text) {
 
 export function getGenderText(gender) {
   switch(gender) {
-    case 'm': return 'Male';
-    case 'f': return 'Female';
+    case 'M': return 'Male';
+    case 'F': return 'Female';
     default: return 'Other';
   }
 }

@@ -243,9 +243,9 @@ class GameApp {
             case 'normal':
                 return difficulty !== 'h' && difficulty !== 'f';
             case 'hard':
-                return difficulty === 'h';
+                return difficulty == 'h' && difficulty !== 'f';
             case 'filler':
-                return difficulty === 'f';
+                return difficulty == 'h' && difficulty == 'f';
             default:
                 return difficulty !== 'h' && difficulty !== 'f';
         }
