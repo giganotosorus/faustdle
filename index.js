@@ -228,11 +228,21 @@ class GameApp {
         const characterNames = Object.keys(names);
         let selectedName;
         let selectedTraits;
+        let attempts = 0;
+        const maxAttempts = 1000; // Prevent infinite loop
         
         do {
             const index = Math.floor(Math.random() * characterNames.length);
             selectedName = characterNames[index];
             selectedTraits = names[selectedName];
+            attempts++;
+            
+            if (attempts >= maxAttempts) {
+                console.error('Could not find a valid character for the selected mode');
+                alert('Error: Could not find a valid character. Please try again.');
+                this.resetGame();
+                return null;
+            }
         } while (!this.isValidCharacterForMode(selectedTraits[9], mode));
         
         return { name: selectedName, traits: selectedTraits };
@@ -241,13 +251,17 @@ class GameApp {
     isValidCharacterForMode(difficulty, mode) {
         switch(mode) {
             case 'normal':
-                return difficulty !== 'h' && difficulty !== 'f';
+                // Normal mode: only normal characters (no hard or filler)
+                return difficulty === 'e';
             case 'hard':
-                return difficulty == 'h' && difficulty !== 'f';
+                // Hard mode: normal and hard characters (no filler)
+                return difficulty === 'n' || difficulty === 'h';
             case 'filler':
-                return difficulty == 'h' && difficulty == 'f';
+                // Filler mode: all characters allowed
+                return true;
             default:
-                return difficulty !== 'h' && difficulty !== 'f';
+                // Default to normal mode behavior
+                return difficulty === 'e';
         }
     }
 
@@ -290,7 +304,7 @@ class GameApp {
             
             if (input.length >= 2) {
                 const matches = Object.keys(names).filter(name => 
-                    name.toLowerCase().startsWith(input)
+                    name.toLowerCase().startsWith(input.toLowerCase())
                 );
                 
                 matches.forEach(match => {
