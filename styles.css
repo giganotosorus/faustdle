@@ -26,7 +26,7 @@ body {
 .container {
   width: 100%;
   max-width: 1200px;
-  background: #E4B372;
+  background: #e4b372a8;
   padding: 2.5rem;
   border-radius: 1rem;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -64,7 +64,7 @@ h1 {
 input {
   flex: 1;
   padding: 0.75rem 1rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid #e2e8f0ec;
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: all 0.2s;
@@ -163,31 +163,31 @@ table {
 th, td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #E2BD8C;
+  border-bottom: 1px solid #e2bd8cd3;
 }
 
 th {
-  background-color: #E2BD8C;
+  background-color: #e2bd8ce5;
   font-weight: 600;
   color: var(--secondary-color);
 }
 
 tr {
-  background-color: #E2BD8C;
+  background-color: #e2bd8ce7;
   transition: background-color 0.2s;
 }
 
 tr:hover {
-  background-color: #E2BD8C;
+  background-color: #e2bd8ce5;
 }
 
 .match {
-  background: #24D475;
+  background: #24d476e5;
   color: #ffffff;
 }
 
 .error {
-  background: #FF3737;
+  background: #ff3737e7;
   color: #ffffff;
 }
 
