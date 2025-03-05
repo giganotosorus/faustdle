@@ -13,7 +13,7 @@ body {
   margin: 0;
   padding: 2rem;
   font-family: system-ui, -apple-system, sans-serif;
-  background-image: url("https://static.wikia.nocookie.net/onepiece/images/0/09/Chapter_863.png/revision/latest?cb=20170424163639");
+  background-image: url('/home/Xtra3678/faustdle/bgfaustdle.png');
   background-size:cover;
   background-color: #f8fafc;
   color: var(--text-color);
