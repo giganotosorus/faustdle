@@ -181,7 +181,7 @@ class GameApp {
     makeGuess() {
         console.log('Making guess');
         const guessInput = document.getElementById('guess-input');
-        const guess = guessInput.value.toLowerCase();
+        const guess = guessInput.value;
         
         if (!names[guess]) {
             alert('Invalid name, try again.');
@@ -285,7 +285,7 @@ class GameApp {
         guessInput.parentNode.appendChild(autocompleteList);
 
         guessInput.addEventListener('input', (e) => {
-            const input = e.target.value.toLowerCase();
+            const input = e.target.value;
             autocompleteList.innerHTML = '';
             
             if (input.length >= 2) {
