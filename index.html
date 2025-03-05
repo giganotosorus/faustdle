@@ -16,6 +16,7 @@
             <div class="button-group">
                 <button id="normal-mode" class="btn">Normal Mode</button>
                 <button id="hard-mode" class="btn btn-hard">Hard Mode</button>
+                <button id="filler-mode" class="btn btn-filler">Filler Mode</button>
                 <button id="daily-mode" class="btn btn-daily">Daily Character</button>
             </div>
             <h2>Or enter a predetermined seed:</h2>
@@ -31,6 +32,7 @@
                     <input type="text" id="guess-input" placeholder="Enter character name...">
                 </div>
                 <button id="guess-button" class="btn">Guess</button>
+                <button id="skip-button" class="btn btn-skip">Give Up</button>
             </div>
             
             <div id="results" class="results">
@@ -56,10 +58,12 @@
         </div>
  
         <div id="game-over" class="game-section hidden">
-            <h2>Congratulations!</h2>
-            <p>You found the correct character!</p>
+            <h2>Game Over!</h2>
+            <p id="game-over-message">You found the correct character!</p>
+            <p>The character was: <span id="correct-character" class="character-name"></span></p>
             <p>Seed for this game: <span id="game-seed" class="seed"></span></p>
-            <pre id="emoji-grid" class="emoji-grid"></pre>
+            <div id="emoji-grid" class="emoji-grid"></div>
+            <div id="guess-distribution" class="guess-distribution"></div>
             <button id="play-again" class="btn">Play Again</button>
         </div>
     </div>

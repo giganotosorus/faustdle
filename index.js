@@ -6,6 +6,8 @@ class GameApp {
         this.chosenCharacter = null;
         this.currentSeed = null;
         this.guessHistory = [];
+        this.gameMode = null;
+        this.guessDistribution = new Array(10).fill(0);
         this.setupEventListeners();
         console.log('GameApp initialized');
     }
@@ -16,27 +18,32 @@ class GameApp {
         // Game mode buttons
         const normalModeButton = document.getElementById('normal-mode');
         const hardModeButton = document.getElementById('hard-mode');
+        const fillerModeButton = document.getElementById('filler-mode');
         const dailyModeButton = document.getElementById('daily-mode');
         const seedStartButton = document.getElementById('seed-start');
         const guessButton = document.getElementById('guess-button');
+        const skipButton = document.getElementById('skip-button');
         const playAgainButton = document.getElementById('play-again');
 
         if (normalModeButton) {
             normalModeButton.addEventListener('click', () => {
                 console.log('Normal mode button clicked');
-                this.startGame(false);
+                this.startGame('normal');
             });
-        } else {
-            console.log('Normal mode button not found');
         }
 
         if (hardModeButton) {
             hardModeButton.addEventListener('click', () => {
                 console.log('Hard mode button clicked');
-                this.startGame(true);
+                this.startGame('hard');
             });
-        } else {
-            console.log('Hard mode button not found');
+        }
+
+        if (fillerModeButton) {
+            fillerModeButton.addEventListener('click', () => {
+                console.log('Filler mode button clicked');
+                this.startGame('filler');
+            });
         }
 
         if (dailyModeButton) {
@@ -44,8 +51,6 @@ class GameApp {
                 console.log('Daily mode button clicked');
                 this.startDailyGame();
             });
-        } else {
-            console.log('Daily mode button not found');
         }
 
         if (seedStartButton) {
@@ -53,8 +58,6 @@ class GameApp {
                 console.log('Seed start button clicked');
                 this.startGameWithSeed();
             });
-        } else {
-            console.log('Seed start button not found');
         }
 
         if (guessButton) {
@@ -62,8 +65,13 @@ class GameApp {
                 console.log('Guess button clicked');
                 this.makeGuess();
             });
-        } else {
-            console.log('Guess button not found');
+        }
+
+        if (skipButton) {
+            skipButton.addEventListener('click', () => {
+                console.log('Skip button clicked');
+                this.skipGame();
+            });
         }
 
         if (playAgainButton) {
@@ -71,8 +79,6 @@ class GameApp {
                 console.log('Play again button clicked');
                 this.resetGame();
             });
-        } else {
-            console.log('Play again button not found');
         }
 
         // Setup guess input enter key
@@ -84,8 +90,6 @@ class GameApp {
                     this.makeGuess();
                 }
             });
-        } else {
-            console.log('Guess input not found');
         }
 
         // Setup seed input enter key
@@ -97,8 +101,6 @@ class GameApp {
                     this.startGameWithSeed();
                 }
             });
-        } else {
-            console.log('Seed input not found');
         }
     }
 
@@ -109,10 +111,12 @@ class GameApp {
 
     startDailyGame() {
         console.log('Starting daily game');
+        this.gameMode = 'daily';
         this.currentSeed = this.getDailySeed();
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
-        this.chosenCharacter = this.selectRandomCharacter(false, this.currentSeed);
+        document.getElementById('skip-button').classList.add('hidden');
+        this.chosenCharacter = this.selectRandomCharacter('normal', this.currentSeed);
     }
 
     startGameWithSeed() {
@@ -122,37 +126,77 @@ class GameApp {
             alert('Please enter a seed value');
             return;
         }
+        this.gameMode = 'normal';
         this.currentSeed = seedInput.value;
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
-        this.chosenCharacter = this.selectRandomCharacter(false, this.currentSeed);
+        document.getElementById('skip-button').classList.remove('hidden');
+        this.chosenCharacter = this.selectRandomCharacter('normal', this.currentSeed);
     }
 
-    startGame(hardMode) {
-        console.log('Starting game', hardMode ? 'in hard mode' : '');
+    startGame(mode) {
+        console.log('Starting game in mode:', mode);
+        this.gameMode = mode;
         this.currentSeed = Math.floor(Math.random() * 1000000).toString();
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
-        this.chosenCharacter = this.selectRandomCharacter(hardMode, this.currentSeed);
+        document.getElementById('skip-button').classList.remove('hidden');
+        this.chosenCharacter = this.selectRandomCharacter(mode, this.currentSeed);
     }
 
     generateEmojiGrid() {
-        let grid = '';
-        [...this.guessHistory].reverse().forEach(guess => {
-            guess.forEach(result => {
+        return [...this.guessHistory].reverse().map(guess => {
+            return guess.map(result => {
                 if (result.match) {
-                    grid += '\ud83d\udfe9'; // Green square emoji
+                    return '🟩'; // Green square emoji
                 } else if (result.direction === 'up') {
-                    grid += '\u2b06\ufe0f'; // Up arrow emoji
+                    return '⬆️'; // Up arrow emoji
                 } else if (result.direction === 'down') {
-                    grid += '\u2b07\ufe0f'; // Down arrow emoji
+                    return '⬇️'; // Down arrow emoji
                 } else {
-                    grid += '\ud83d\udfe5'; // Red square emoji
+                    return '🟥'; // Red square emoji
                 }
-            });
-            grid += '\\n';
+            }).join('');
+        }).join('\n');
+    }
+
+    updateGuessDistribution() {
+        const container = document.getElementById('guess-distribution');
+        container.innerHTML = '';
+        
+        const maxGuesses = Math.max(...this.guessDistribution);
+        
+        this.guessDistribution.forEach((count, index) => {
+            if (index === 0) return; // Skip index 0
+            
+            const bar = document.createElement('div');
+            bar.className = 'guess-bar';
+            
+            const label = document.createElement('div');
+            label.className = 'guess-label';
+            label.textContent = index;
+            
+            const countElement = document.createElement('div');
+            countElement.className = 'guess-count';
+            countElement.textContent = count;
+            countElement.style.width = `${(count / maxGuesses) * 100}%`;
+            
+            bar.appendChild(label);
+            bar.appendChild(countElement);
+            container.appendChild(bar);
         });
-        return grid;
+    }
+
+    skipGame() {
+        if (this.gameMode === 'daily') return;
+        
+        document.getElementById('game-play').classList.add('hidden');
+        document.getElementById('game-over').classList.remove('hidden');
+        document.getElementById('game-over-message').textContent = 'Game skipped!';
+        document.getElementById('correct-character').textContent = this.chosenCharacter.name;
+        document.getElementById('game-seed').textContent = this.currentSeed;
+        document.getElementById('emoji-grid').textContent = this.generateEmojiGrid();
+        this.updateGuessDistribution();
     }
 
     makeGuess() {
@@ -168,11 +212,15 @@ class GameApp {
         if (guess === this.chosenCharacter.name) {
             const results = compareTraits(names[guess], this.chosenCharacter.traits);
             this.guessHistory.push(results);
+            this.guessDistribution[this.guessHistory.length]++;
             
             document.getElementById('game-play').classList.add('hidden');
             document.getElementById('game-over').classList.remove('hidden');
+            document.getElementById('game-over-message').textContent = 'Congratulations! You found the correct character!';
+            document.getElementById('correct-character').textContent = this.chosenCharacter.name;
             document.getElementById('game-seed').textContent = this.currentSeed;
             document.getElementById('emoji-grid').textContent = this.generateEmojiGrid();
+            this.updateGuessDistribution();
             return;
         }
         
@@ -189,13 +237,15 @@ class GameApp {
         document.getElementById('seed-input').value = '';
         document.getElementById('results-table').querySelector('tbody').innerHTML = '';
         document.getElementById('emoji-grid').textContent = '';
+        document.getElementById('guess-distribution').innerHTML = '';
         this.chosenCharacter = null;
         this.currentSeed = null;
         this.guessHistory = [];
+        this.gameMode = null;
     }
 
-    selectRandomCharacter(hardMode, seed) {
-        console.log('Selecting random character', hardMode ? 'in hard mode' : '', 'with seed', seed);
+    selectRandomCharacter(mode, seed) {
+        console.log('Selecting random character in mode:', mode);
         Math.seedrandom(seed);
         const characterNames = Object.keys(names);
         let selectedName;
@@ -205,9 +255,22 @@ class GameApp {
             const index = Math.floor(Math.random() * characterNames.length);
             selectedName = characterNames[index];
             selectedTraits = names[selectedName];
-        } while (!hardMode && selectedTraits[9] === 'h');
+        } while (!this.isValidCharacterForMode(selectedTraits[9], mode));
         
         return { name: selectedName, traits: selectedTraits };
+    }
+
+    isValidCharacterForMode(difficulty, mode) {
+        switch(mode) {
+            case 'normal':
+                return difficulty !== 'h' && difficulty !== 'f';
+            case 'hard':
+                return difficulty === 'h';
+            case 'filler':
+                return difficulty === 'f';
+            default:
+                return difficulty !== 'h' && difficulty !== 'f';
+        }
     }
 
     displayResultsUI(guessName, results) {

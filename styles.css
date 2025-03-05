@@ -15,7 +15,7 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
   background-image: url("https://media.discordapp.net/attachments/830888172467781682/1341941205294125058/1000.png?ex=67b7d3a3&is=67b68223&hm=b41e0e377146f20cd0018fc8b70da04efdfbdd4c27561083438cce08bb5a680d&=&format=webp&quality=lossless");
   background-size:cover;
-  background-color: #f8fafc;
+  background-color: #E4B372;
   color: var(--text-color);
   min-height: 100vh;
   display: flex;
@@ -82,6 +82,7 @@ input:focus {
   display: flex;
   gap: 1rem;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .btn {
@@ -104,18 +105,40 @@ input:focus {
 .btn:active {
   transform: translateY(0);
 }
+
 .btn-hard {
   background: #24D475;
 }
+
 .btn-hard:hover {
   background: #227047;
 }
+
+.btn-filler {
+  background: #9333ea;
+}
+
+.btn-filler:hover {
+  background: #7e22ce;
+}
+
 .btn-daily {
   background: var(--accent-color);
+  width: 100%;
+  max-width: 300px;
+  margin-top: 1rem;
 }
 
 .btn-daily:hover {
   background: #d97706;
+}
+
+.btn-skip {
+  background: #64748b;
+}
+
+.btn-skip:hover {
+  background: #475569;
 }
 
 .results {
@@ -209,11 +232,39 @@ tr:hover {
 
 .emoji-grid {
   font-family: monospace;
-  white-space: pre;
+  white-space: pre-wrap;
   margin: 1.5rem 0;
   padding: 1rem;
   background: #E2BD8C;
   border-radius: 0.5rem;
+  text-align: center;
+}
+
+.guess-distribution {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #E2BD8C;
+  border-radius: 0.5rem;
+}
+
+.guess-bar {
+  display: flex;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+
+.guess-label {
+  min-width: 2rem;
+  text-align: right;
+  margin-right: 0.5rem;
+}
+
+.guess-count {
+  background: #24D475;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  min-width: 2rem;
   text-align: center;
 }
 
@@ -236,6 +287,11 @@ tr:hover {
   color: var(--success-color);
   font-size: 2rem;
   margin-bottom: 1.5rem;
+}
+
+.character-name {
+  font-weight: bold;
+  color: var(--primary-color);
 }
 
 @media (max-width: 768px) {
