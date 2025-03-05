@@ -243,7 +243,7 @@ class GameApp {
                 this.resetGame();
                 return null;
             }
-        } while (!this.isValidCharacterForMode(selectedTraits[9], mode));
+        } while (!this.isValidCharacterForMode(selectedTraits[10], mode)); // Changed from [9] to [10]
         
         return { name: selectedName, traits: selectedTraits };
     }
