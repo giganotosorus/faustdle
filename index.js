@@ -209,8 +209,13 @@ class GameApp {
             const index = Math.floor(Math.random() * characterNames.length);
             const selectedName = characterNames[index];
             
+            // Check if the selected character matches the desired character
             if (selectedName === character) {
-                return seed;
+                // Verify that the character would actually be selectable in some mode
+                const difficulty = names[character][9];
+                if (difficulty === 'E' || difficulty === 'H' || difficulty === 'F') {
+                    return seed;
+                }
             }
             
             attempts++;
