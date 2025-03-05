@@ -7,7 +7,10 @@ class GameApp {
         this.currentSeed = null;
         this.guessHistory = [];
         this.gameMode = null;
+        this.startTime = null;
+        this.elapsedTimeInterval = null;
         this.setupEventListeners();
+        this.updateDailyCountdown();
         console.log('GameApp initialized');
     }
 
@@ -23,6 +26,10 @@ class GameApp {
         const guessButton = document.getElementById('guess-button');
         const skipButton = document.getElementById('skip-button');
         const playAgainButton = document.getElementById('play-again');
+        const generateSeedButton = document.getElementById('generate-seed');
+        const generateSeedForCharacterButton = document.getElementById('generate-seed-for-character');
+        const useGeneratedSeedButton = document.getElementById('use-generated-seed');
+        const backToMainButton = document.getElementById('back-to-main');
 
         if (normalModeButton) {
             normalModeButton.addEventListener('click', () => {
@@ -49,6 +56,48 @@ class GameApp {
             dailyModeButton.addEventListener('click', () => {
                 console.log('Daily mode button clicked');
                 this.startDailyGame();
+            });
+
+            // Show countdown when hovering over daily mode button
+            dailyModeButton.addEventListener('mouseenter', () => {
+                document.getElementById('daily-countdown').classList.remove('hidden');
+            });
+
+            dailyModeButton.addEventListener('mouseleave', () => {
+                document.getElementById('daily-countdown').classList.add('hidden');
+            });
+        }
+
+        if (generateSeedButton) {
+            generateSeedButton.addEventListener('click', () => {
+                console.log('Generate seed button clicked');
+                document.getElementById('game-setup').classList.add('hidden');
+                document.getElementById('seed-generator').classList.remove('hidden');
+                this.setupCharacterAutocomplete();
+            });
+        }
+
+        if (generateSeedForCharacterButton) {
+            generateSeedForCharacterButton.addEventListener('click', () => {
+                this.generateSeedForCharacter();
+            });
+        }
+
+        if (useGeneratedSeedButton) {
+            useGeneratedSeedButton.addEventListener('click', () => {
+                const generatedSeed = document.getElementById('seed-result').textContent;
+                document.getElementById('seed-generator').classList.add('hidden');
+                document.getElementById('game-setup').classList.remove('hidden');
+                document.getElementById('seed-input').value = generatedSeed;
+            });
+        }
+
+        if (backToMainButton) {
+            backToMainButton.addEventListener('click', () => {
+                document.getElementById('seed-generator').classList.add('hidden');
+                document.getElementById('game-setup').classList.remove('hidden');
+                document.getElementById('character-input').value = '';
+                document.getElementById('generated-seed').classList.add('hidden');
             });
         }
 
@@ -101,6 +150,147 @@ class GameApp {
                 }
             });
         }
+
+        // Setup character input enter key
+        const characterInput = document.getElementById('character-input');
+        if (characterInput) {
+            characterInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    console.log('Enter key pressed in character input');
+                    this.generateSeedForCharacter();
+                }
+            });
+        }
+    }
+
+    updateDailyCountdown() {
+        const updateTimer = () => {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setUTCHours(24, 0, 0, 0);
+            const timeLeft = tomorrow - now;
+
+            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+            const countdownTimer = document.getElementById('countdown-timer');
+            const resultCountdownTimer = document.getElementById('result-countdown-timer');
+            
+            const timerText = `${hours}h ${minutes}m ${seconds}s`;
+            if (countdownTimer) {
+                countdownTimer.textContent = timerText;
+            }
+            if (resultCountdownTimer) {
+                resultCountdownTimer.textContent = timerText;
+            }
+        };
+
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    }
+
+    generateSeedForCharacter() {
+        const characterInput = document.getElementById('character-input');
+        const character = characterInput.value;
+        
+        if (!names[character]) {
+            alert('Invalid character name, please try again.');
+            return;
+        }
+
+        // Generate a unique seed for this character
+        const characterSeed = this.generateUniqueSeedForCharacter(character);
+        
+        document.getElementById('seed-result').textContent = characterSeed;
+        document.getElementById('generated-seed').classList.remove('hidden');
+    }
+
+    generateUniqueSeedForCharacter(character) {
+        let attempts = 0;
+        const maxAttempts = 1000;
+        let seed;
+        
+        do {
+            seed = Math.random().toString(36).substring(2, 15);
+            Math.seedrandom(seed);
+            const characterNames = Object.keys(names);
+            const index = Math.floor(Math.random() * characterNames.length);
+            const selectedName = characterNames[index];
+            
+            if (selectedName === character) {
+                return seed;
+            }
+            
+            attempts++;
+        } while (attempts < maxAttempts);
+        
+        throw new Error('Could not generate a valid seed for the character');
+    }
+
+    setupCharacterAutocomplete() {
+        const characterInput = document.getElementById('character-input');
+        const autocompleteList = document.createElement('ul');
+        autocompleteList.className = 'autocomplete-list';
+        characterInput.parentNode.appendChild(autocompleteList);
+
+        characterInput.addEventListener('input', (e) => {
+            const input = e.target.value;
+            autocompleteList.innerHTML = '';
+            
+            if (input.length >= 2) {
+                const matches = Object.keys(names).filter(name => 
+                    name.toLowerCase().startsWith(input.toLowerCase())
+                );
+                
+                matches.forEach(match => {
+                    const li = document.createElement('li');
+                    li.textContent = match;
+                    li.addEventListener('click', () => {
+                        characterInput.value = match;
+                        autocompleteList.innerHTML = '';
+                    });
+                    autocompleteList.appendChild(li);
+                });
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!characterInput.contains(e.target)) {
+                autocompleteList.innerHTML = '';
+            }
+        });
+    }
+
+    startElapsedTimer() {
+        this.startTime = Date.now();
+        const elapsedTimer = document.getElementById('elapsed-timer');
+        
+        if (this.elapsedTimeInterval) {
+            clearInterval(this.elapsedTimeInterval);
+        }
+
+        this.elapsedTimeInterval = setInterval(() => {
+            const elapsed = Date.now() - this.startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            elapsedTimer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
+    }
+
+    stopElapsedTimer() {
+        if (this.elapsedTimeInterval) {
+            clearInterval(this.elapsedTimeInterval);
+            this.elapsedTimeInterval = null;
+        }
+
+        if (this.startTime) {
+            const elapsed = Date.now() - this.startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('final-time').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
     }
 
     getDailySeed() {
@@ -116,6 +306,7 @@ class GameApp {
         document.getElementById('game-play').classList.remove('hidden');
         document.getElementById('skip-button').classList.add('hidden');
         this.chosenCharacter = this.selectRandomCharacter('normal', this.currentSeed);
+        this.startElapsedTimer();
     }
 
     startGameWithSeed() {
@@ -131,6 +322,7 @@ class GameApp {
         document.getElementById('game-play').classList.remove('hidden');
         document.getElementById('skip-button').classList.remove('hidden');
         this.chosenCharacter = this.selectRandomCharacter('normal', this.currentSeed);
+        this.startElapsedTimer();
     }
 
     startGame(mode) {
@@ -141,6 +333,7 @@ class GameApp {
         document.getElementById('game-play').classList.remove('hidden');
         document.getElementById('skip-button').classList.remove('hidden');
         this.chosenCharacter = this.selectRandomCharacter(mode, this.currentSeed);
+        this.startElapsedTimer();
     }
 
     generateEmojiGrid() {
@@ -169,6 +362,7 @@ class GameApp {
     skipGame() {
         if (this.gameMode === 'daily') return;
         
+        this.stopElapsedTimer();
         document.getElementById('game-play').classList.add('hidden');
         document.getElementById('game-over').classList.remove('hidden');
         document.getElementById('game-over-message').textContent = 'Game skipped!';
@@ -192,12 +386,19 @@ class GameApp {
             const results = compareTraits(names[guess], this.chosenCharacter.traits);
             this.guessHistory.push(results);
             
+            this.stopElapsedTimer();
             document.getElementById('game-play').classList.add('hidden');
             document.getElementById('game-over').classList.remove('hidden');
             document.getElementById('game-over-message').textContent = 'Congratulations! You found the correct character!';
             document.getElementById('correct-character').textContent = this.chosenCharacter.name;
             document.getElementById('game-seed').textContent = this.currentSeed;
             document.getElementById('emoji-grid').textContent = this.generateEmojiGrid();
+            
+            // Show daily countdown in results for daily mode
+            if (this.gameMode === 'daily') {
+                document.getElementById('daily-result-countdown').classList.remove('hidden');
+            }
+            
             this.copyResultsTable();
             return;
         }
@@ -216,10 +417,17 @@ class GameApp {
         document.getElementById('results-table').querySelector('tbody').innerHTML = '';
         document.getElementById('results-table-final').querySelector('tbody').innerHTML = '';
         document.getElementById('emoji-grid').textContent = '';
+        document.getElementById('elapsed-timer').textContent = '0:00';
+        document.getElementById('daily-result-countdown').classList.add('hidden');
         this.chosenCharacter = null;
         this.currentSeed = null;
         this.guessHistory = [];
         this.gameMode = null;
+        this.startTime = null;
+        if (this.elapsedTimeInterval) {
+            clearInterval(this.elapsedTimeInterval);
+            this.elapsedTimeInterval = null;
+        }
     }
 
     selectRandomCharacter(mode, seed) {
@@ -243,7 +451,7 @@ class GameApp {
                 this.resetGame();
                 return null;
             }
-        } while (!this.isValidCharacterForMode(selectedTraits[9], mode)); // Changed from [9] to [10]
+        } while (!this.isValidCharacterForMode(selectedTraits[9], mode));
         
         return { name: selectedName, traits: selectedTraits };
     }
@@ -251,16 +459,12 @@ class GameApp {
     isValidCharacterForMode(difficulty, mode) {
         switch(mode) {
             case 'normal':
-                // Normal mode: only normal characters (no hard or filler)
                 return difficulty === 'E';
             case 'hard':
-                // Hard mode: normal and hard characters (no filler)
                 return difficulty === 'E' || difficulty === 'H';
             case 'filler':
-                // Filler mode: all characters allowed
                 return true;
             default:
-                // Default to normal mode behavior
                 return difficulty === 'E';
         }
     }
