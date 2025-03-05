@@ -243,7 +243,7 @@ class GameApp {
                 this.resetGame();
                 return null;
             }
-        } while (!this.isValidCharacterForMode(selectedTraits[10], mode)); // Changed from [9] to [10]
+        } while (!this.isValidCharacterForMode(selectedTraits[9], mode)); // Changed from [9] to [10]
         
         return { name: selectedName, traits: selectedTraits };
     }
@@ -252,16 +252,16 @@ class GameApp {
         switch(mode) {
             case 'normal':
                 // Normal mode: only normal characters (no hard or filler)
-                return difficulty === 'e';
+                return difficulty === 'E';
             case 'hard':
                 // Hard mode: normal and hard characters (no filler)
-                return difficulty === 'e' || difficulty === 'h';
+                return difficulty === 'E' || difficulty === 'H';
             case 'filler':
                 // Filler mode: all characters allowed
                 return true;
             default:
                 // Default to normal mode behavior
-                return difficulty === 'e';
+                return difficulty === 'E';
         }
     }
 
