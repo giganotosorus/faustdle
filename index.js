@@ -57,15 +57,6 @@ class GameApp {
                 console.log('Daily mode button clicked');
                 this.startDailyGame();
             });
-
-            // Show countdown when hovering over daily mode button
-            dailyModeButton.addEventListener('mouseenter', () => {
-                document.getElementById('daily-countdown').classList.remove('hidden');
-            });
-
-            dailyModeButton.addEventListener('mouseleave', () => {
-                document.getElementById('daily-countdown').classList.add('hidden');
-            });
         }
 
         if (generateSeedButton) {
@@ -391,7 +382,16 @@ class GameApp {
             document.getElementById('game-over').classList.remove('hidden');
             document.getElementById('game-over-message').textContent = 'Congratulations! You found the correct character!';
             document.getElementById('correct-character').textContent = this.chosenCharacter.name;
-            document.getElementById('game-seed').textContent = this.currentSeed;
+            
+            // Only show seed if not in daily mode
+            const gameSeedContainer = document.getElementById('game-seed-container');
+            if (this.gameMode === 'daily') {
+                gameSeedContainer.classList.add('hidden');
+            } else {
+                gameSeedContainer.classList.remove('hidden');
+                document.getElementById('game-seed').textContent = this.currentSeed;
+            }
+            
             document.getElementById('emoji-grid').textContent = this.generateEmojiGrid();
             
             // Show daily countdown in results for daily mode
@@ -419,6 +419,7 @@ class GameApp {
         document.getElementById('emoji-grid').textContent = '';
         document.getElementById('elapsed-timer').textContent = '0:00';
         document.getElementById('daily-result-countdown').classList.add('hidden');
+        document.getElementById('game-seed-container').classList.remove('hidden');
         this.chosenCharacter = null;
         this.currentSeed = null;
         this.guessHistory = [];
