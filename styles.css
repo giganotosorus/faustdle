@@ -307,12 +307,6 @@ tr:hover {
   text-align: center;
 }
 
-.game-controls {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
 @keyframes slideIn {
   from {
     opacity: 0;

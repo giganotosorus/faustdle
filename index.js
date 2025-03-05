@@ -30,7 +30,6 @@ class GameApp {
         const generateSeedForCharacterButton = document.getElementById('generate-seed-for-character');
         const useGeneratedSeedButton = document.getElementById('use-generated-seed');
         const backToMainButton = document.getElementById('back-to-main');
-        const backToMenuButton = document.getElementById('back-to-menu');
 
         if (normalModeButton) {
             normalModeButton.addEventListener('click', () => {
@@ -57,6 +56,15 @@ class GameApp {
             dailyModeButton.addEventListener('click', () => {
                 console.log('Daily mode button clicked');
                 this.startDailyGame();
+            });
+
+            // Show countdown when hovering over daily mode button
+            dailyModeButton.addEventListener('mouseenter', () => {
+                document.getElementById('daily-countdown').classList.remove('hidden');
+            });
+
+            dailyModeButton.addEventListener('mouseleave', () => {
+                document.getElementById('daily-countdown').classList.add('hidden');
             });
         }
 
@@ -90,12 +98,6 @@ class GameApp {
                 document.getElementById('game-setup').classList.remove('hidden');
                 document.getElementById('character-input').value = '';
                 document.getElementById('generated-seed').classList.add('hidden');
-            });
-        }
-
-        if (backToMenuButton) {
-            backToMenuButton.addEventListener('click', () => {
-                this.resetGame();
             });
         }
 
@@ -389,13 +391,7 @@ class GameApp {
             document.getElementById('game-over').classList.remove('hidden');
             document.getElementById('game-over-message').textContent = 'Congratulations! You found the correct character!';
             document.getElementById('correct-character').textContent = this.chosenCharacter.name;
-            
-            // Only show seed if not in daily mode
-            if (this.gameMode !== 'daily') {
-                document.getElementById('game-seed-container').classList.remove('hidden');
-                document.getElementById('game-seed').textContent = this.currentSeed;
-            }
-            
+            document.getElementById('game-seed').textContent = this.currentSeed;
             document.getElementById('emoji-grid').textContent = this.generateEmojiGrid();
             
             // Show daily countdown in results for daily mode
@@ -416,7 +412,6 @@ class GameApp {
     resetGame() {
         console.log('Resetting game');
         document.getElementById('game-over').classList.add('hidden');
-        document.getElementById('game-play').classList.add('hidden');
         document.getElementById('game-setup').classList.remove('hidden');
         document.getElementById('seed-input').value = '';
         document.getElementById('results-table').querySelector('tbody').innerHTML = '';
@@ -424,12 +419,11 @@ class GameApp {
         document.getElementById('emoji-grid').textContent = '';
         document.getElementById('elapsed-timer').textContent = '0:00';
         document.getElementById('daily-result-countdown').classList.add('hidden');
-        document.getElementById('game-seed-container').classList.add('hidden');
         this.chosenCharacter = null;
         this.currentSeed = null;
         this.guessHistory = [];
         this.gameMode = null;
-        this. startTime = null;
+        this.startTime = null;
         if (this.elapsedTimeInterval) {
             clearInterval(this.elapsedTimeInterval);
             this.elapsedTimeInterval = null;
