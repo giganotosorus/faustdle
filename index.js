@@ -1,7 +1,5 @@
 import { names, arcs, haki } from './data/characters.js';
 import { compareTraits } from './utils/gameLogic.js';
-import { APConnection } from './src/components/APConnection.js';
-import { apClient } from './src/archipelago/client.js';
 
 class GameApp {
     constructor() {
@@ -13,48 +11,7 @@ class GameApp {
         this.elapsedTimeInterval = null;
         this.setupEventListeners();
         this.updateDailyCountdown();
-        this.initializeAP();
         console.log('GameApp initialized');
-    }
-
-    initializeAP() {
-        // Create AP connection UI
-        new APConnection(document.body);
-
-        // Listen for AP connection requests
-        document.addEventListener('ap-connect-request', async (event) => {
-            const { address, port, slot, password } = event.detail;
-            const success = await apClient.connect(address, port, slot, password);
-            
-            if (success) {
-                alert('Connected to Archipelago!');
-                this.setupAPHints();
-            } else {
-                alert('Failed to connect to Archipelago. Please check your connection details.');
-            }
-        });
-    }
-
-    setupAPHints() {
-        // Create hints container if it doesn't exist
-        let hintsContainer = document.getElementById('ap-hints');
-        if (!hintsContainer) {
-            hintsContainer = document.createElement('div');
-            hintsContainer.id = 'ap-hints';
-            hintsContainer.className = 'ap-hints-container';
-            document.querySelector('.container').appendChild(hintsContainer);
-        }
-
-        // Listen for new hints
-        apClient.on('hintsUpdated', (hints) => {
-            hintsContainer.innerHTML = '';
-            hints.forEach(hint => {
-                const hintElement = document.createElement('div');
-                hintElement.className = `ap-hint ${hint.progression ? 'progression' : ''}`;
-                hintElement.textContent = `Hint: ${hint.type} - ${hint.value}`;
-                hintsContainer.appendChild(hintElement);
-            });
-        });
     }
 
     setupEventListeners() {
@@ -381,11 +338,6 @@ class GameApp {
         document.getElementById('skip-button').classList.remove('hidden');
         this.chosenCharacter = this.selectRandomCharacter(mode, this.currentSeed);
         this.startElapsedTimer();
-        
-        // Update AP client with game mode
-        if (apClient.isConnected()) {
-            apClient.setGameMode(mode);
-        }
     }
 
     generateEmojiGrid() {
