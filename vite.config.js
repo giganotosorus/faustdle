@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/faustdle/',  // Change this to match your repository name
+  base: '/faustdle/',
   server: {
     port: 3000,
     open: true,
