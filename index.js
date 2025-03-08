@@ -3,8 +3,16 @@ import { compareTraits } from './utils/gameLogic.js';
 import { APConnection } from './src/components/APConnection.js';
 import { apClient } from './src/archipelago/client.js';
 
+/**
+ * Main game application class that handles all game logic and UI interactions
+ */
 class GameApp {
+    /**
+     * Initializes the game application
+     * Sets up initial state and event listeners
+     */
     constructor() {
+        // Core game state
         this.chosenCharacter = null;
         this.currentSeed = null;
         this.guessHistory = [];
@@ -12,7 +20,7 @@ class GameApp {
         this.startTime = null;
         this.elapsedTimeInterval = null;
         
-        // Add death link event listener
+        // Set up death link event listener
         document.addEventListener('death_link_triggered', (event) => {
             this.handleDeathLink(`Death Link from ${event.detail.source}`);
         });
@@ -23,12 +31,16 @@ class GameApp {
         console.log('GameApp initialized');
     }
 
+    /**
+     * Initializes Archipelago connection and sets up related event handlers
+     */
     initializeAP() {
         const seedGenerator = document.querySelector('.seed-generator');
         if (seedGenerator) {
             new APConnection(seedGenerator);
         }
 
+        // Handle AP connection requests
         document.addEventListener('ap-connect-request', async (event) => {
             const { address, port, slot, password, deathLink } = event.detail;
             const success = await apClient.connect(address, port, slot, password, deathLink);
@@ -42,6 +54,7 @@ class GameApp {
             }
         });
 
+        // Set up AP client event listeners
         apClient.on('connected', () => {
             this.updateGameModesVisibility(true);
         });
@@ -59,6 +72,10 @@ class GameApp {
         });
     }
 
+    /**
+     * Updates UI visibility based on AP connection status
+     * @param {boolean} isConnected - Whether connected to AP server
+     */
     updateGameModesVisibility(isConnected) {
         const dailyModeButton = document.getElementById('daily-mode');
         const seedSection = document.getElementById('seed-section');
@@ -84,6 +101,9 @@ class GameApp {
         }
     }
 
+    /**
+     * Sets up the hints display container for Archipelago integration
+     */
     setupAPHints() {
         let hintsContainer = document.getElementById('ap-hints');
         if (!hintsContainer) {
@@ -107,6 +127,11 @@ class GameApp {
         });
     }
 
+    /**
+     * Formats a hint message for display
+     * @param {Object} hint - Hint object containing player and guess information
+     * @returns {string} Formatted hint message
+     */
     formatHint(hint) {
         if (!hint) return 'Invalid hint';
         
@@ -124,11 +149,19 @@ class GameApp {
         return text;
     }
 
+    /**
+     * Gets player name from player ID
+     * @param {string|number} playerId - Player ID to look up
+     * @returns {string} Player name or "Unknown Player" if not found
+     */
     getPlayerName(playerId) {
         const player = apClient.players.get(playerId?.toString());
         return player?.name || 'Unknown Player';
     }
 
+    /**
+     * Updates the countdown timer for daily mode
+     */
     updateDailyCountdown() {
         const updateTimer = () => {
             const now = new Date();
@@ -156,6 +189,9 @@ class GameApp {
         setInterval(updateTimer, 1000);
     }
 
+    /**
+     * Sets up all event listeners for game controls
+     */
     setupEventListeners() {
         // Game mode buttons
         const normalModeButton = document.getElementById('normal-mode');
@@ -171,6 +207,7 @@ class GameApp {
         const useGeneratedSeedButton = document.getElementById('use-generated-seed');
         const backToMainButton = document.getElementById('back-to-main');
 
+        // Set up click handlers for all buttons
         if (normalModeButton) {
             normalModeButton.addEventListener('click', () => {
                 console.log('Normal mode button clicked');
@@ -260,7 +297,7 @@ class GameApp {
             });
         }
 
-        // Setup guess input enter key
+        // Setup enter key handlers
         const guessInput = document.getElementById('guess-input');
         if (guessInput) {
             guessInput.addEventListener('keypress', (e) => {
@@ -271,7 +308,6 @@ class GameApp {
             });
         }
 
-        // Setup seed input enter key
         const seedInput = document.getElementById('seed-input');
         if (seedInput) {
             seedInput.addEventListener('keypress', (e) => {
@@ -282,7 +318,6 @@ class GameApp {
             });
         }
 
-        // Setup character input enter key
         const characterInput = document.getElementById('character-input');
         if (characterInput) {
             characterInput.addEventListener('keypress', (e) => {
@@ -294,6 +329,9 @@ class GameApp {
         }
     }
 
+    /**
+     * Processes a guess attempt
+     */
     makeGuess() {
         console.log('Making guess');
         const guessInput = document.getElementById('guess-input');
@@ -330,6 +368,9 @@ class GameApp {
         }
     }
 
+    /**
+     * Handles skipping the current game
+     */
     skipGame() {
         if (!this.chosenCharacter || this.gameMode === 'daily') return;
         
@@ -349,6 +390,10 @@ class GameApp {
         }
     }
 
+    /**
+     * Handles death link event
+     * @param {string} reason - Reason for death link trigger
+     */
     handleDeathLink(reason) {
         this.stopElapsedTimer();
         document.getElementById('game-play').classList.add('hidden');
@@ -360,6 +405,10 @@ class GameApp {
         this.copyResultsTable();
     }
 
+    /**
+     * Starts a new game with specified mode
+     * @param {string} mode - Game mode ('normal', 'hard', or 'filler')
+     */
     startGame(mode) {
         console.log('Starting game in mode:', mode);
         this.gameMode = mode;
@@ -375,6 +424,12 @@ class GameApp {
         }
     }
 
+    /**
+     * Selects a random character based on mode and seed
+     * @param {string} mode - Game mode
+     * @param {string} seed - Random seed
+     * @returns {Object|null} Selected character object or null if error
+     */
     selectRandomCharacter(mode, seed) {
         console.log('Selecting random character in mode:', mode);
         try {
@@ -405,6 +460,12 @@ class GameApp {
         }
     }
 
+    /**
+     * Checks if a character is valid for the selected game mode
+     * @param {string} difficulty - Character difficulty rating
+     * @param {string} mode - Game mode
+     * @returns {boolean} Whether character is valid for mode
+     */
     isValidCharacterForMode(difficulty, mode) {
         switch(mode) {
             case 'normal':
@@ -418,6 +479,9 @@ class GameApp {
         }
     }
 
+    /**
+     * Starts a daily challenge game
+     */
     startDailyGame() {
         console.log('Starting daily game');
         this.gameMode = 'daily';
@@ -429,11 +493,18 @@ class GameApp {
         this.startElapsedTimer();
     }
 
+    /**
+     * Generates seed for daily challenge
+     * @returns {string} Generated seed based on current date
+     */
     getDailySeed() {
         const date = new Date();
         return `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`;
     }
 
+    /**
+     * Starts game with user-provided seed
+     */
     startGameWithSeed() {
         console.log('Starting game with seed');
         const seedInput = document.getElementById('seed-input');
@@ -458,6 +529,9 @@ class GameApp {
         this.startElapsedTimer();
     }
 
+    /**
+     * Generates a seed for a specific character
+     */
     generateSeedForCharacter() {
         try {
             const characterInput = document.getElementById('character-input');
@@ -483,6 +557,11 @@ class GameApp {
         }
     }
 
+    /**
+     * Generates a unique seed that will select a specific character
+     * @param {string} character - Target character name
+     * @returns {string|null} Generated seed or null if failed
+     */
     generateUniqueSeedForCharacter(character) {
         let attempts = 0;
         const maxAttempts = 1000;
@@ -514,6 +593,9 @@ class GameApp {
         return null;
     }
 
+    /**
+     * Sets up autocomplete for character input
+     */
     setupCharacterAutocomplete() {
         const characterInput = document.getElementById('character-input');
         const autocompleteList = document.createElement('ul');
@@ -548,6 +630,9 @@ class GameApp {
         });
     }
 
+    /**
+     * Sets up autocomplete for guess input
+     */
     setupAutocomplete() {
         const guessInput = document.getElementById('guess-input');
         const autocompleteList = document.createElement('ul');
@@ -582,6 +667,9 @@ class GameApp {
         });
     }
 
+    /**
+     * Starts the elapsed time counter
+     */
     startElapsedTimer() {
         this.startTime = Date.now();
         const elapsedTimer = document.getElementById('elapsed-timer');
@@ -598,6 +686,9 @@ class GameApp {
         }, 1000);
     }
 
+    /**
+     * Stops the elapsed time counter
+     */
     stopElapsedTimer() {
         if (this.elapsedTimeInterval) {
             clearInterval(this.elapsedTimeInterval);
@@ -613,6 +704,9 @@ class GameApp {
         }
     }
 
+    /**
+     * Handles a correct guess
+     */
     handleCorrectGuess() {
         this.stopElapsedTimer();
         document.getElementById('game-play').classList.add('hidden');
@@ -633,6 +727,9 @@ class GameApp {
         this.copyResultsTable();
     }
 
+    /**
+     * Resets the game state
+     */
     resetGame() {
         console.log('Resetting game');
         document.getElementById('game-over').classList.add('hidden');
@@ -655,6 +752,11 @@ class GameApp {
         }
     }
 
+    /**
+     * Displays results in the UI
+     * @param {string} guessName - Name of guessed character
+     * @param {Array} results - Array of comparison results
+     */
     displayResultsUI(guessName, results) {
         console.log('Displaying results for guess', guessName);
         const tbody = document.getElementById('results-table').querySelector('tbody');
@@ -682,6 +784,10 @@ class GameApp {
         tbody.insertBefore(row, tbody.firstChild);
     }
 
+    /**
+     * Generates emoji grid representation of guess history
+     * @returns {string} Emoji grid string
+     */
     generateEmojiGrid() {
         return [...this.guessHistory].reverse().map(guess => {
             return guess.map(result => {
@@ -698,6 +804,9 @@ class GameApp {
         }).join('\n');
     }
 
+    /**
+     * Copies results table to final results display
+     */
     copyResultsTable() {
         const originalTable = document.getElementById('results-table');
         const finalTable = document.getElementById('results-table-final');

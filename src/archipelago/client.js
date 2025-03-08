@@ -1,6 +1,13 @@
 import { EventEmitter } from '../utils/events.js';
 
+/**
+ * Client for connecting to and interacting with Archipelago multiworld servers
+ * Handles WebSocket communication, game state, and hint management
+ */
 class FaustdleAPClient extends EventEmitter {
+    /**
+     * Initializes the Archipelago client with default state
+     */
     constructor() {
         super();
         this.socket = null;
@@ -23,12 +30,25 @@ class FaustdleAPClient extends EventEmitter {
         this.deathLinkEnabled = false;
     }
 
+    /**
+     * Logs debug messages if debug mode is enabled
+     * @param {...any} args - Arguments to log
+     */
     log(...args) {
         if (this.debug) {
             console.log('[AP Client]', ...args);
         }
     }
 
+    /**
+     * Establishes connection to Archipelago server
+     * @param {string} hostname - Server hostname
+     * @param {number} port - Server port
+     * @param {string} slot - Player slot name
+     * @param {string} [password=''] - Optional server password
+     * @param {boolean} [deathLink=false] - Whether to enable death link feature
+     * @returns {Promise<boolean>} True if connection successful, false otherwise
+     */
     async connect(hostname, port, slot, password = '', deathLink = false) {
         try {
             hostname = hostname?.trim().toLowerCase() || '';
@@ -127,6 +147,10 @@ class FaustdleAPClient extends EventEmitter {
         }
     }
 
+    /**
+     * Sends a raw packet to the server
+     * @param {Object} packet - Packet to send
+     */
     sendRaw(packet) {
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
             this.log('Cannot send message: socket not ready');
@@ -142,6 +166,10 @@ class FaustdleAPClient extends EventEmitter {
         }
     }
 
+    /**
+     * Handles incoming packets from the server
+     * @param {Object} packet - Received packet
+     */
     handlePacket(packet) {
         if (!packet || typeof packet !== 'object' || !packet.cmd) {
             this.log('Invalid packet received:', packet);
@@ -259,6 +287,10 @@ class FaustdleAPClient extends EventEmitter {
         }
     }
 
+    /**
+     * Handles death link packets from other players
+     * @param {Object} packet - Death link packet
+     */
     handleDeathLink(packet) {
         if (!packet.data) return;
         
@@ -268,6 +300,10 @@ class FaustdleAPClient extends EventEmitter {
         this.emit('death_link_received', { source });
     }
 
+    /**
+     * Sends a death link to other players
+     * @param {string} [reason='Failed to guess character'] - Reason for death
+     */
     sendDeathLink(reason = 'Failed to guess character') {
         if (!this.connected || !this.deathLinkEnabled) return;
 
@@ -283,6 +319,9 @@ class FaustdleAPClient extends EventEmitter {
         });
     }
 
+    /**
+     * Scouts all missing locations
+     */
     scoutAllLocations() {
         const locations = Array.from(this.missingLocations);
         if (locations.length > 0) {
@@ -295,6 +334,10 @@ class FaustdleAPClient extends EventEmitter {
         }
     }
 
+    /**
+     * Processes location information from server
+     * @param {Object} locations - Location data
+     */
     processLocationInfo(locations) {
         if (!locations || typeof locations !== 'object') return;
 
@@ -305,6 +348,10 @@ class FaustdleAPClient extends EventEmitter {
         }
     }
 
+    /**
+     * Gets a random missing location, prioritizing progression items based on game mode
+     * @returns {number|null} Location ID or null if none available
+     */
     getRandomMissingLocation() {
         if (!this.missingLocations.size) {
             this.log('No missing locations available');
@@ -365,6 +412,9 @@ class FaustdleAPClient extends EventEmitter {
         return selectedLocation;
     }
 
+    /**
+     * Sends a test hint to verify hint system functionality
+     */
     sendTestHint() {
         if (!this.connected) {
             this.log('Cannot send test hint: not connected');
@@ -383,6 +433,11 @@ class FaustdleAPClient extends EventEmitter {
         }
     }
 
+    /**
+     * Submits a guess result and potentially sends a hint
+     * @param {string} guess - The character that was guessed
+     * @param {Object} result - Result of the guess
+     */
     submitGuess(guess, result) {
         if (!this.connected || !result.correct) return;
 
@@ -398,6 +453,10 @@ class FaustdleAPClient extends EventEmitter {
         }
     }
 
+    /**
+     * Processes received items and updates hints
+     * @param {Array} items - Array of received items
+     */
     processReceivedItems(items) {
         if (!Array.isArray(items)) return;
 
@@ -419,22 +478,41 @@ class FaustdleAPClient extends EventEmitter {
         }
     }
 
+    /**
+     * Sets the current game mode
+     * @param {string} mode - Game mode to set
+     */
     setGameMode(mode) {
         this.gameMode = mode;
     }
 
+    /**
+     * Gets all current hints
+     * @returns {Array} Array of hints
+     */
     getHints() {
         return [...this.hints];
     }
 
+    /**
+     * Checks if client is connected to server
+     * @returns {boolean} Connection status
+     */
     isConnected() {
         return this.connected;
     }
 
+    /**
+     * Checks if death link is enabled
+     * @returns {boolean} Death link status
+     */
     isDeathLinkEnabled() {
         return this.deathLinkEnabled;
     }
 
+    /**
+     * Disconnects from the server and resets state
+     */
     disconnect() {
         if (this.socket) {
             this.socket.close();

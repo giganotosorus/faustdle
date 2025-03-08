@@ -1,6 +1,14 @@
 import { apClient } from '../archipelago/client.js';
 
+/**
+ * Manages the Archipelago connection UI and interactions
+ * Handles connection dialog, status updates, and hint display
+ */
 export class APConnection {
+    /**
+     * Creates a new APConnection instance
+     * @param {HTMLElement} container - Container element for AP connection UI
+     */
     constructor(container) {
         this.container = container;
         this.visible = false;
@@ -9,16 +17,22 @@ export class APConnection {
         this.setupEventListeners();
     }
 
+    /**
+     * Creates and initializes all UI elements for AP connection
+     * Includes connection dialog, buttons, and hints container
+     */
     createUI() {
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'button-group';
 
+        // Create main connection toggle button
         const connectButton = document.createElement('button');
         connectButton.id = 'archipelago-toggle';
         connectButton.className = 'btn btn-ap';
         connectButton.textContent = 'Connect to Archipelago';
         connectButton.onclick = () => this.toggleConnectionDialog();
 
+        // Create test hint button (hidden by default)
         const testHintButton = document.createElement('button');
         testHintButton.id = 'ap-test-hint';
         testHintButton.className = 'btn btn-ap';
@@ -29,6 +43,7 @@ export class APConnection {
         buttonContainer.appendChild(connectButton);
         buttonContainer.appendChild(testHintButton);
         
+        // Create connection dialog
         const dialog = document.createElement('div');
         dialog.id = 'ap-connection-dialog';
         dialog.className = 'ap-dialog hidden';
@@ -63,6 +78,7 @@ export class APConnection {
             </div>
         `;
 
+        // Create hints container
         const hintsContainer = document.createElement('div');
         hintsContainer.id = 'ap-hints-container';
         hintsContainer.className = 'ap-hints-container';
@@ -78,7 +94,12 @@ export class APConnection {
         }
     }
 
+    /**
+     * Sets up the hints display system and death link handlers
+     * Listens for hint updates and death link events from AP client
+     */
     setupHintsDisplay() {
+        // Handle hint updates
         apClient.on('hintsUpdated', (hints) => {
             const container = document.getElementById('ap-hints-container');
             if (!container) return;
@@ -100,9 +121,10 @@ export class APConnection {
             }
         });
 
+        // Handle death link events
         apClient.on('death_link_received', ({ source }) => {
             this.showStatus(`Death Link received from ${source}! Game Over!`, 'error');
-            // Trigger game over
+            // Trigger game over event
             const event = new CustomEvent('death_link_triggered', {
                 detail: { source }
             });
@@ -110,10 +132,16 @@ export class APConnection {
         });
     }
 
+    /**
+     * Sets up all event listeners for AP connection
+     * Handles connection, disconnection, and status updates
+     */
     setupEventListeners() {
+        // Connect and cancel button handlers
         document.getElementById('ap-connect')?.addEventListener('click', () => this.handleConnect());
         document.getElementById('ap-cancel')?.addEventListener('click', () => this.toggleConnectionDialog());
 
+        // AP client event handlers
         apClient.on('connected', () => {
             this.showStatus('Connected successfully!', 'success');
             const connectButton = document.getElementById('archipelago-toggle');
@@ -166,6 +194,11 @@ export class APConnection {
         });
     }
 
+    /**
+     * Shows a status message in the connection dialog
+     * @param {string} message - Status message to display
+     * @param {string} [type='info'] - Message type ('info', 'success', 'error', 'warning')
+     */
     showStatus(message, type = 'info') {
         const statusContainer = document.getElementById('ap-connection-status');
         const statusMessage = statusContainer?.querySelector('.status-message');
@@ -177,6 +210,9 @@ export class APConnection {
         }
     }
 
+    /**
+     * Toggles the visibility of the connection dialog
+     */
     toggleConnectionDialog() {
         const dialog = document.getElementById('ap-connection-dialog');
         if (dialog) {
@@ -192,6 +228,10 @@ export class APConnection {
         }
     }
 
+    /**
+     * Handles the connection attempt
+     * Validates input and initiates connection to AP server
+     */
     async handleConnect() {
         const address = document.getElementById('ap-address')?.value;
         const port = parseInt(document.getElementById('ap-port')?.value || '38281');
