@@ -643,7 +643,7 @@ class GameApp {
         document.getElementById('results-table').querySelector('tbody').innerHTML = '';
         document.getElementById('results-table-final').querySelector('tbody').innerHTML = '';
         document.getElementById('emoji-grid').textContent = '';
-        document.getElementById('elapse d-timer').textContent = '0:00';
+        document.getElementById('elapsed-timer').textContent = '0:00';
         document.getElementById('daily-result-countdown').classList.add('hidden');
         document.getElementById('game-seed-container').classList.remove('hidden');
         this.chosenCharacter = null;
