@@ -10,27 +10,22 @@ export function compareTraits(guessTraits, chosenTraits) {
     
     // Special handling for bounty (index 4)
     if (i === 4) {
-      if (guessTraits[i] === "1" && chosenTraits[i] === "1") {
-        // Both bounties are unknown
+      const guessBounty = parseInt(guessTraits[i]);
+      const chosenBounty = parseInt(chosenTraits[i]);
+
+      if (guessBounty === chosenBounty) {
+        // Bounties match exactly (including both being unknown)
         results.push({
           match: true,
-          text: "Unknown Bounty"
-        });
-      } else if (guessTraits[i] === "1") {
-        // Only guessed character has unknown bounty
-        results.push({
-          match: false,
-          text: "Unknown Bounty"
-        });
-      } else if (chosenTraits[i] === "1") {
-        // Only chosen character has unknown bounty
-        results.push({
-          match: false,
-          text: guessTraits[i]
+          text: guessBounty === 1 ? "Unknown Bounty" : guessBounty.toString()
         });
       } else {
-        // Both characters have known bounties
-        results.push(createNonMatchResult(guessTraits[i], chosenTraits[i], i));
+        // Different bounties - always show direction
+        results.push({
+          match: false,
+          direction: compareNumbers(guessBounty, chosenBounty),
+          text: guessBounty === 1 ? "Unknown Bounty" : guessBounty.toString()
+        });
       }
       continue;
     }
