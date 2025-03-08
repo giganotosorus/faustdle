@@ -158,7 +158,7 @@ class FaustdleAPClient extends EventEmitter {
                 }
                 
                 this.dataPackage = packet.data;
-                const tags = ['Faustdle'];
+                const tags = ['Faustdle', 'HintGame'];
                 if (this.deathLinkEnabled) {
                     tags.push('DeathLink');
                 }
