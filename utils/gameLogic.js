@@ -9,11 +9,29 @@ export function compareTraits(guessTraits, chosenTraits) {
     if (i === 9) continue; // Skip the last trait
     
     // Special handling for bounty (index 4)
-    if (i === 4 && (guessTraits[i] === "1" || chosenTraits[i] === "1")) {
-      results.push({
-        match: false,
-        text: "Unknown Bounty"
-      });
+    if (i === 4) {
+      if (guessTraits[i] === "1" && chosenTraits[i] === "1") {
+        // Both bounties are unknown
+        results.push({
+          match: true,
+          text: "Unknown Bounty"
+        });
+      } else if (guessTraits[i] === "1") {
+        // Only guessed character has unknown bounty
+        results.push({
+          match: false,
+          text: "Unknown Bounty"
+        });
+      } else if (chosenTraits[i] === "1") {
+        // Only chosen character has unknown bounty
+        results.push({
+          match: false,
+          text: guessTraits[i]
+        });
+      } else {
+        // Both characters have known bounties
+        results.push(createNonMatchResult(guessTraits[i], chosenTraits[i], i));
+      }
       continue;
     }
     
