@@ -1,8 +1,5 @@
-import { haki, arcs } from '../data/characters.js';
-import { formatText, getGenderText } from './textFormatters.js';
-import { compareNumbers } from './numberComparison.js';
-
-export function compareTraits(guessTraits, chosenTraits) {
+// Game logic for comparing traits
+function compareTraits(guessTraits, chosenTraits) {
   const results = [];
   
   for (let i = 0; i < guessTraits.length; i++) {
@@ -93,3 +90,5 @@ function createTextComparisonResult(trait, index) {
     text: formatText(trait)
   };
 }
+
+export { compareTraits }

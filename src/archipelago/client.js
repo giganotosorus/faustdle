@@ -454,3 +454,5 @@ class FaustdleAPClient extends EventEmitter {
 }
 
 export const apClient = new FaustdleAPClient();
+
+export { apClient }

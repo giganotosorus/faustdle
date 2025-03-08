@@ -212,3 +212,5 @@ export class APConnection {
         document.dispatchEvent(event);
     }
 }
+
+export { APConnection }
