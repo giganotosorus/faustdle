@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from '../utils/events.js';
 
 class FaustdleAPClient extends EventEmitter {
     constructor() {

@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "seedrandom": "^3.0.5",
-    "events": "^3.3.0",
     "ws": "^8.16.0"
   },
   "devDependencies": {
