@@ -297,7 +297,15 @@ class FaustdleAPClient extends EventEmitter {
         const deathData = packet.data;
         const source = deathData.source || 'Unknown';
         this.log('Death link received from:', source);
-        this.emit('death_link_received', { source });
+
+        // Create a custom event with the source and force skip flag
+        const event = new CustomEvent('death_link_received', {
+            detail: { 
+                source,
+                forceSkip: true // Add flag to indicate this should force a skip
+            }
+        });
+        document.dispatchEvent(event);
     }
 
     /**

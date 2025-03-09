@@ -32,6 +32,19 @@ class GameApp {
     }
 
     /**
+     * Finds the exact character name regardless of case
+     * @param {string} input - User input name
+     * @returns {string|null} Exact character name or null if not found
+     */
+    findCharacterName(input) {
+        const lowerInput = input.toLowerCase();
+        const exactName = Object.keys(names).find(name => 
+            name.toLowerCase() === lowerInput
+        );
+        return exactName || null;
+    }
+
+    /**
      * Initializes Archipelago connection and sets up related event handlers
      */
     initializeAP() {
@@ -69,6 +82,14 @@ class GameApp {
 
         apClient.on('server_error', (error) => {
             alert(`Archipelago server error: ${error.text || 'Unknown error'}`);
+        });
+
+        // Handle death link events
+        document.addEventListener('death_link_received', (event) => {
+            const { source, forceSkip } = event.detail;
+            if (forceSkip) {
+                this.skipGame(true);
+            }
         });
     }
 
@@ -157,6 +178,18 @@ class GameApp {
     getPlayerName(playerId) {
         const player = apClient.players.get(playerId?.toString());
         return player?.name || 'Unknown Player';
+    }
+
+    /**
+     * Gets the current daily challenge number
+     * @returns {number} Number of days since March 4, 2025
+     */
+    getDailyChallengeNumber() {
+        const startDate = new Date('2025-03-04');
+        const today = new Date();
+        const diffTime = Math.abs(today - startDate);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays + 1; // Add 1 to start from Day 1
     }
 
     /**
@@ -335,19 +368,21 @@ class GameApp {
     makeGuess() {
         console.log('Making guess');
         const guessInput = document.getElementById('guess-input');
-        const guess = guessInput.value;
+        const guessValue = guessInput.value;
         
-        if (!names[guess]) {
+        const exactName = this.findCharacterName(guessValue);
+        if (!exactName) {
             alert('Invalid name, try again.');
             return;
         }
         
-        const results = compareTraits(names[guess], this.chosenCharacter.traits);
+        const results = compareTraits(names[exactName], this.chosenCharacter.traits);
+        this.displayResultsUI(exactName, results);
         this.guessHistory.push(results);
         
         if (apClient.isConnected()) {
-            apClient.submitGuess(guess, {
-                correct: guess === this.chosenCharacter.name,
+            apClient.submitGuess(exactName, {
+                correct: exactName === this.chosenCharacter.name,
                 matches: results.filter(r => r.match).length,
                 total: results.length
             });
@@ -360,33 +395,34 @@ class GameApp {
             }
         }
 
-        if (guess === this.chosenCharacter.name) {
+        if (exactName === this.chosenCharacter.name) {
             this.handleCorrectGuess();
-        } else {
-            this.displayResultsUI(guess, results);
-            guessInput.value = '';
         }
+        
+        guessInput.value = '';
     }
 
     /**
      * Handles skipping the current game
+     * @param {boolean} [isDeathLink=false] - Whether skip was triggered by death link
      */
-    skipGame() {
+    skipGame(isDeathLink = false) {
         if (!this.chosenCharacter || this.gameMode === 'daily') return;
         
         this.stopElapsedTimer();
         document.getElementById('game-play').classList.add('hidden');
         document.getElementById('game-over').classList.remove('hidden');
-        document.getElementById('game-over-message').textContent = 'Game skipped!';
+        document.getElementById('game-over-message').textContent = isDeathLink ? 
+            'Game Over - Death Link forced skip!' : 
+            'Game skipped!';
         document.getElementById('correct-character').textContent = this.chosenCharacter.name;
         document.getElementById('game-seed').textContent = this.currentSeed;
         document.getElementById('emoji-grid').textContent = this.generateEmojiGrid();
         this.copyResultsTable();
 
-        // Send death link if enabled and skipped
-        if (apClient.isConnected() && apClient.isDeathLinkEnabled()) {
+        // Only send death link if it wasn't triggered by one
+        if (!isDeathLink && apClient.isConnected() && apClient.isDeathLinkEnabled()) {
             apClient.sendDeathLink('Skipped game');
-            this.handleDeathLink('Skipped game');
         }
     }
 
@@ -535,15 +571,15 @@ class GameApp {
     generateSeedForCharacter() {
         try {
             const characterInput = document.getElementById('character-input');
-            const character = characterInput.value;
+            const exactName = this.findCharacterName(characterInput.value);
             
-            if (!names[character]) {
+            if (!exactName) {
                 alert('Invalid character name, please try again.');
                 return;
             }
 
             // Generate a unique seed for this character
-            const characterSeed = this.generateUniqueSeedForCharacter(character);
+            const characterSeed = this.generateUniqueSeedForCharacter(exactName);
             
             if (characterSeed) {
                 document.getElementById('seed-result').textContent = characterSeed;
@@ -603,12 +639,12 @@ class GameApp {
         characterInput.parentNode.appendChild(autocompleteList);
 
         characterInput.addEventListener('input', (e) => {
-            const input = e.target.value;
+            const input = e.target.value.toLowerCase();
             autocompleteList.innerHTML = '';
             
             if (input.length >= 2) {
                 const matches = Object.keys(names).filter(name => 
-                    name.toLowerCase().startsWith(input.toLowerCase())
+                    name.toLowerCase().startsWith(input)
                 );
                 
                 matches.forEach(match => {
@@ -640,12 +676,12 @@ class GameApp {
         guessInput.parentNode.appendChild(autocompleteList);
 
         guessInput.addEventListener('input', (e) => {
-            const input = e.target.value;
+            const input = e.target.value.toLowerCase();
             autocompleteList.innerHTML = '';
             
             if (input.length >= 2) {
                 const matches = Object.keys(names).filter(name => 
-                    name.toLowerCase().startsWith(input.toLowerCase())
+                    name.toLowerCase().startsWith(input)
                 );
                 
                 matches.forEach(match => {
@@ -718,6 +754,16 @@ class GameApp {
         if (this.gameMode === 'daily') {
             gameSeedContainer.classList.add('hidden');
             document.getElementById('daily-result-countdown').classList.remove('hidden');
+            const dailyNumber = this.getDailyChallengeNumber();
+            document.getElementById('game-over-message').textContent = 
+                `Congratulations! You completed Daily Challenge #${dailyNumber}!`;
+            
+            // Add the daily number above the emoji grid
+            const emojiGrid = document.getElementById('emoji-grid');
+            const dailyText = document.createElement('div');
+            dailyText.className = 'daily-number';
+            dailyText.textContent = `Faustdle Day #${dailyNumber}`;
+            emojiGrid.parentNode.insertBefore(dailyText, emojiGrid);
         } else {
             gameSeedContainer.classList.remove('hidden');
             document.getElementById('game-seed').textContent = this.currentSeed;
@@ -741,6 +787,13 @@ class GameApp {
         document.getElementById('elapsed-timer').textContent = '0:00';
         document.getElementById('daily-result-countdown').classList.add('hidden');
         document.getElementById('game-seed-container').classList.remove('hidden');
+        
+        // Remove the daily number text if it exists
+        const dailyNumber = document.querySelector('.daily-number');
+        if (dailyNumber) {
+            dailyNumber.remove();
+        }
+        
         this.chosenCharacter = null;
         this.currentSeed = null;
         this.guessHistory = [];

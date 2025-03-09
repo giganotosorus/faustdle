@@ -3,6 +3,16 @@ import { formatText, getGenderText } from './textFormatters.js';
 import { compareNumbers } from './numberComparison.js';
 
 /**
+ * Formats a bounty number with commas
+ * @param {number} bounty - The bounty value to format
+ * @returns {string} Formatted bounty string
+ */
+function formatBounty(bounty) {
+  if (bounty === 1) return "Unknown Bounty";
+  return bounty.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+/**
  * Compares traits between a guessed character and the chosen character
  * @param {Array} guessTraits - Array of traits for the guessed character
  * @param {Array} chosenTraits - Array of traits for the chosen character
@@ -24,14 +34,14 @@ export function compareTraits(guessTraits, chosenTraits) {
         // Bounties match exactly (including both being unknown)
         results.push({
           match: true,
-          text: guessBounty === 1 ? "Unknown Bounty" : guessBounty.toString()
+          text: formatBounty(guessBounty)
         });
       } else {
         // Different bounties - show direction (higher/lower)
         results.push({
           match: false,
           direction: compareNumbers(guessBounty, chosenBounty),
-          text: guessBounty === 1 ? "Unknown Bounty" : guessBounty.toString()
+          text: formatBounty(guessBounty)
         });
       }
       continue;
