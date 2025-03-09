@@ -756,7 +756,7 @@ class GameApp {
             document.getElementById('daily-result-countdown').classList.remove('hidden');
             const dailyNumber = this.getDailyChallengeNumber();
             document.getElementById('game-over-message').textContent = 
-                `Congratulations! You completed Daily Challenge #${dailyNumber}!`;
+                `Congratulations!`;
             
             // Add the daily number above the emoji grid
             const emojiGrid = document.getElementById('emoji-grid');
