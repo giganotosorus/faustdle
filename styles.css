@@ -158,7 +158,6 @@ input:focus {
 
 .btn-generate {
   width: 100%;
-  margin-top: 1rem;
   background: var(--secondary-color);
 }
 
