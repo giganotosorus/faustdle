@@ -22,10 +22,14 @@ export class APConnection {
      * Includes connection dialog, buttons, and hints container
      */
     createUI() {
-        const buttonContainer = document.createElement('div');
-        buttonContainer.className = 'button-group';
+        // Create Other button
+        const otherButton = document.createElement('button');
+        otherButton.id = 'other-toggle';
+        otherButton.className = 'btn btn-other';
+        otherButton.textContent = 'Other';
+        otherButton.onclick = () => this.toggleOtherDialog();
 
-        // Create main connection toggle button
+        // Create main connection toggle button (now in Other dialog)
         const connectButton = document.createElement('button');
         connectButton.id = 'archipelago-toggle';
         connectButton.className = 'btn btn-ap';
@@ -40,8 +44,21 @@ export class APConnection {
         testHintButton.onclick = () => apClient.sendTestHint();
         testHintButton.style.display = 'none';
         
-        buttonContainer.appendChild(connectButton);
-        buttonContainer.appendChild(testHintButton);
+        // Create Other dialog
+        const otherDialog = document.createElement('div');
+        otherDialog.id = 'other-dialog';
+        otherDialog.className = 'other-dialog hidden';
+        otherDialog.innerHTML = `
+            <div class="other-dialog-content">
+                <h3>Other Options</h3>
+                <div class="other-buttons">
+                    <button id="streak-mode" class="btn btn-streak">Streak Mode</button>
+                    <button id="faq-button" class="btn btn-faq">FAQ</button>
+                    <button id="ap-connect-button" class="btn btn-ap">Connect to Archipelago</button>
+                    <button id="other-cancel" class="btn btn-secondary">Back</button>
+                </div>
+            </div>
+        `;
         
         // Create connection dialog
         const dialog = document.createElement('div');
@@ -84,14 +101,22 @@ export class APConnection {
         hintsContainer.className = 'ap-hints-container';
         hintsContainer.style.display = 'none';
 
-        this.container.appendChild(dialog);
-        this.container.appendChild(hintsContainer);
-
-        // Insert the button container after the "Get character seed" button
-        const seedGenerator = document.querySelector('.seed-generator .button-group');
+        // Find or create the button container
+        const seedGenerator = document.querySelector('.seed-generator');
         if (seedGenerator) {
-            seedGenerator.appendChild(connectButton);
+            let buttonGroup = seedGenerator.querySelector('.button-group');
+            if (!buttonGroup) {
+                buttonGroup = document.createElement('div');
+                buttonGroup.className = 'button-group';
+                seedGenerator.appendChild(buttonGroup);
+            }
+            buttonGroup.appendChild(otherButton);
+            buttonGroup.appendChild(testHintButton);
         }
+
+        this.container.appendChild(dialog);
+        this.container.appendChild(otherDialog);
+        this.container.appendChild(hintsContainer);
     }
 
     /**
@@ -140,15 +165,19 @@ export class APConnection {
         // Connect and cancel button handlers
         document.getElementById('ap-connect')?.addEventListener('click', () => this.handleConnect());
         document.getElementById('ap-cancel')?.addEventListener('click', () => this.toggleConnectionDialog());
+        document.getElementById('other-cancel')?.addEventListener('click', () => this.toggleOtherDialog());
+        document.getElementById('ap-connect-button')?.addEventListener('click', () => {
+            this.toggleOtherDialog();
+            this.toggleConnectionDialog();
+        });
 
         // AP client event handlers
         apClient.on('connected', () => {
             this.showStatus('Connected successfully!', 'success');
-            const connectButton = document.getElementById('archipelago-toggle');
+            const otherButton = document.getElementById('other-toggle');
             const testHintButton = document.getElementById('ap-test-hint');
-            if (connectButton) {
-                connectButton.textContent = 'Connected to AP';
-                connectButton.classList.add('connected');
+            if (otherButton) {
+                otherButton.style.display = 'none';
             }
             if (testHintButton) {
                 testHintButton.style.display = 'block';
@@ -173,12 +202,11 @@ export class APConnection {
         });
 
         apClient.on('disconnected', () => {
-            const connectButton = document.getElementById('archipelago-toggle');
+            const otherButton = document.getElementById('other-toggle');
             const testHintButton = document.getElementById('ap-test-hint');
             const hintsContainer = document.getElementById('ap-hints-container');
-            if (connectButton) {
-                connectButton.textContent = 'Connect to Archipelago';
-                connectButton.classList.remove('connected');
+            if (otherButton) {
+                otherButton.style.display = 'block';
             }
             if (testHintButton) {
                 testHintButton.style.display = 'none';
@@ -225,6 +253,16 @@ export class APConnection {
                     statusContainer.className = 'ap-status hidden';
                 }
             }
+        }
+    }
+
+    /**
+     * Toggles the visibility of the other dialog
+     */
+    toggleOtherDialog() {
+        const dialog = document.getElementById('other-dialog');
+        if (dialog) {
+            dialog.classList.toggle('hidden');
         }
     }
 
