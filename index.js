@@ -118,12 +118,12 @@ class GameApp {
             
             connectedButton.style.display = 'block';
             connectedButton.textContent = 'Connect to Archipelago';
-            connectedButton.classList.remove('connected');
+            connectedButton. connectedButton.classList.remove('connected');
         }
     }
 
     /**
-     * Sets up the hints display container for Archipelago integration
+     * Sets up the hints display system and death link handlers
      */
     setupAPHints() {
         let hintsContainer = document.getElementById('ap-hints');
@@ -239,6 +239,8 @@ class GameApp {
         const generateSeedForCharacterButton = document.getElementById('generate-seed-for-character');
         const useGeneratedSeedButton = document.getElementById('use-generated-seed');
         const backToMainButton = document.getElementById('back-to-main');
+        const faqButton = document.getElementById('faq-button');
+        const faqBackButton = document.getElementById('faq-back');
 
         // Set up click handlers for all buttons
         if (normalModeButton) {
@@ -327,6 +329,20 @@ class GameApp {
             playAgainButton.addEventListener('click', () => {
                 console.log('Play again button clicked');
                 this.resetGame();
+            });
+        }
+
+        if (faqButton) {
+            faqButton.addEventListener('click', () => {
+                document.getElementById('other-dialog').classList.add('hidden');
+                document.getElementById('faq-dialog').classList.remove('hidden');
+            });
+        }
+
+        if (faqBackButton) {
+            faqBackButton.addEventListener('click', () => {
+                document.getElementById('faq-dialog').classList.add('hidden');
+                document.getElementById('other-dialog').classList.remove('hidden');
             });
         }
 
