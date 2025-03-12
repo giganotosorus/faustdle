@@ -7,7 +7,6 @@ import { CharacterSelector } from './CharacterSelector.js';
 import { TimerManager } from './TimerManager.js';
 import { UIManager } from './UIManager.js';
 import { ResultsManager } from './ResultsManager.js';
-import { createClient } from '@supabase/supabase-js';
 import { LeaderboardManager } from './LeaderboardManager.js';
 
 /**
@@ -39,8 +38,8 @@ export default class GameApp {
             return;
         }
 
-        // Initialize Supabase client for database operations
-        this.supabase = createClient(supabaseUrl, supabaseKey);
+        // Initialize Supabase client using the global supabase object
+        this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         // Initialize game component managers
         this.autocomplete = new AutocompleteManager();    // Handles character name suggestions
