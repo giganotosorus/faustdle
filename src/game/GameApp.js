@@ -7,39 +7,51 @@ import { CharacterSelector } from './CharacterSelector.js';
 import { TimerManager } from './TimerManager.js';
 import { UIManager } from './UIManager.js';
 import { ResultsManager } from './ResultsManager.js';
+import { createClient } from '@supabase/supabase-js';
+import { LeaderboardManager } from './LeaderboardManager.js';
 
 /**
- * Main game application class that handles all game logic and UI interactions
+ * Main game application class that manages the core game logic, state, and interactions.
+ * Coordinates between different managers and handles game flow.
  */
-export class GameApp {
+export default class GameApp {
     /**
-     * Initializes the game application
-     * Sets up initial state and event listeners
+     * Initializes the game application and sets up all necessary components.
+     * Creates manager instances, establishes database connection, and sets up event listeners.
      */
     constructor() {
-        // Core game state
-        this.chosenCharacter = null;
-        this.currentSeed = null;
-        this.guessHistory = [];
-        this.gameMode = null;
-        this.startTime = null;
-        this.elapsedTimeInterval = null;
-        this.streakCount = 0;
-        this.isStreakMode = false;
-        this.selectedStreakMode = 'normal';
-
-        // Initialize managers
-        this.autocomplete = new AutocompleteManager();
-        this.characterSelector = new CharacterSelector();
-        this.timer = new TimerManager();
-        this.ui = new UIManager();
-        this.results = new ResultsManager();
+        // Initialize core game state variables
+        this.chosenCharacter = null;      // Currently selected character for the game
+        this.currentSeed = null;          // Current game seed
+        this.guessHistory = [];           // Array of player guesses and their results
+        this.gameMode = null;             // Current game mode (normal, hard, filler, daily)
+        this.startTime = null;            // Game start timestamp
+        this.elapsedTimeInterval = null;   // Timer interval reference
+        this.streakCount = 0;             // Current streak in streak mode
+        this.isStreakMode = false;        // Whether streak mode is active
+        this.selectedStreakMode = 'normal'; // Selected difficulty for streak mode
         
-        // Set up death link event listener
+        // Initialize Supabase client for database operations
+        this.supabase = createClient(
+            import.meta.env.VITE_SUPABASE_URL,
+            import.meta.env.VITE_SUPABASE_ANON_KEY
+        );
+
+        // Initialize game component managers
+        this.autocomplete = new AutocompleteManager();    // Handles character name suggestions
+        this.characterSelector = new CharacterSelector(); // Manages character selection logic
+        this.timer = new TimerManager();                 // Handles game timing
+        this.ui = new UIManager(this.supabase);          // Manages UI updates and display
+        this.results = new ResultsManager();             // Handles game results display
+        this.leaderboardManager = new LeaderboardManager(this.supabase); // Manages leaderboard functionality
+        this.leaderboardManager.createLeaderboardDialog();
+        
+        // Set up death link event listener for Archipelago integration
         document.addEventListener('death_link_triggered', (event) => {
             this.handleDeathLink(`Death Link from ${event.detail.source}`);
         });
 
+        // Initialize Archipelago connection and UI components
         this.initializeAP();
         this.ui.updateDailyCountdown();
         this.setupEventListeners();
@@ -47,9 +59,41 @@ export class GameApp {
         console.log('GameApp initialized');
     }
 
-    /**
-     * Sets up all event listeners for game controls
-     */
+    getDailyChallengeCache() {
+        const cache = localStorage.getItem('dailyChallenge');
+        if (!cache) return null;
+        
+        try {
+            const data = JSON.parse(cache);
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Check if cache is from today
+            if (data.date === today) {
+                return data;
+            }
+            
+            // Clear expired cache
+            localStorage.removeItem('dailyChallenge');
+            return null;
+        } catch (error) {
+            console.error('Error parsing daily challenge cache:', error);
+            return null;
+        }
+    }
+
+    saveDailyChallengeCache(data) {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const cacheData = {
+                date: today,
+                ...data
+            };
+            localStorage.setItem('dailyChallenge', JSON.stringify(cacheData));
+        } catch (error) {
+            console.error('Error saving daily challenge cache:', error);
+        }
+    }
+
     setupEventListeners() {
         // Game mode buttons
         const normalModeButton = document.getElementById('normal-mode');
@@ -67,6 +111,21 @@ export class GameApp {
         const faqButton = document.getElementById('faq-button');
         const faqBackButton = document.getElementById('faq-back');
         const streakModeButton = document.getElementById('streak-mode');
+
+        // Add leaderboard button to other dialog
+        const otherButtons = document.querySelector('.other-buttons');
+        const leaderboardButton = document.createElement('button');
+        leaderboardButton.id = 'leaderboard-button';
+        leaderboardButton.className = 'btn btn-leaderboard';
+        leaderboardButton.textContent = 'Leaderboard';
+        leaderboardButton.addEventListener('click', () => {
+            document.getElementById('other-dialog').classList.add('hidden');
+            const leaderboardDialog = document.getElementById('leaderboard-dialog');
+            leaderboardDialog.classList.remove('hidden');
+            // Load normal mode leaderboard by default
+            this.leaderboardManager.loadLeaderboard('normal');
+        });
+        otherButtons.insertBefore(leaderboardButton, otherButtons.querySelector('#other-cancel'));
 
         // Set up click handlers for all buttons
         if (normalModeButton) {
@@ -189,9 +248,6 @@ export class GameApp {
         }
     }
 
-    /**
-     * Initializes Archipelago connection
-     */
     initializeAP() {
         const seedGenerator = document.querySelector('.seed-generator');
         if (seedGenerator) {
@@ -230,9 +286,6 @@ export class GameApp {
         });
     }
 
-    /**
-     * Sets up autocomplete for input fields
-     */
     setupAutocomplete() {
         const guessInput = document.getElementById('guess-input');
         if (guessInput) {
@@ -273,9 +326,6 @@ export class GameApp {
         dialog.classList.remove('hidden');
     }
 
-    /**
-     * Starts streak mode
-     */
     startStreakMode() {
         this.isStreakMode = true;
         this.streakCount = 0;
@@ -283,12 +333,9 @@ export class GameApp {
         this.startGame(this.selectedStreakMode);
     }
 
-    /**
-     * Starts a new game with specified mode
-     * @param {string} mode - Game mode ('normal', 'hard', or 'filler')
-     */
     startGame(mode) {
         this.gameMode = mode;
+        window.gameMode = mode; // Reset game mode
         this.currentSeed = Math.random().toString(36).substring(2, 15);
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
@@ -307,9 +354,6 @@ export class GameApp {
         }
     }
 
-    /**
-     * Makes a guess attempt
-     */
     makeGuess() {
         const guessInput = document.getElementById('guess-input');
         const guessValue = guessInput.value;
@@ -322,12 +366,13 @@ export class GameApp {
         
         const results = compareTraits(names[exactName], this.chosenCharacter.traits);
         this.results.displayResults(exactName, results);
-        this.guessHistory.push(results);
+        this.guessHistory.push({ name: exactName, results }); // Store name with results
         
         const isCorrectGuess = exactName === this.chosenCharacter.name;
         
-        // Check for streak mode loss condition - 8 guesses and incorrect
-        if (this.isStreakMode && this.guessHistory.length >= 8 && !isCorrectGuess) {
+        // Check for streak mode loss condition based on game mode
+        const maxGuesses = this.gameMode === 'normal' ? 6 : 8;
+        if (this.isStreakMode && this.guessHistory.length >= maxGuesses && !isCorrectGuess) {
             this.handleStreakLoss();
             return;
         }
@@ -339,7 +384,7 @@ export class GameApp {
                 total: results.length
             });
 
-            if (apClient.isDeathLinkEnabled() && this.guessHistory.length > 8) {
+            if (apClient.isDeathLinkEnabled() && this.guessHistory.length > maxGuesses) {
                 apClient.sendDeathLink('Too many guesses');
                 this.handleDeathLink('Too many guesses');
                 return;
@@ -353,23 +398,34 @@ export class GameApp {
         guessInput.value = '';
     }
 
-    /**
-     * Handles skipping the current game
-     * @param {boolean} [isDeathLink=false] - Whether skip was triggered by death link
-     */
     skipGame(isDeathLink = false) {
-        if (!this.chosenCharacter || this.gameMode === 'daily') return;
+        if (!this.chosenCharacter) return;
         
         this.timer.stopTimer();
         document.getElementById('game-play').classList.add('hidden');
         document.getElementById('game-over').classList.remove('hidden');
+        
+        // Show appropriate message and character name
         document.getElementById('game-over-message').textContent = isDeathLink ? 
             'Game Over - Death Link forced skip!' : 
             'Game skipped!';
         document.getElementById('correct-character').textContent = this.chosenCharacter.name;
-        document.getElementById('game-seed').textContent = this.currentSeed;
-        document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory);
+        
+        // Show seed for non-daily modes
+        const seedContainer = document.getElementById('game-seed-container');
+        if (this.gameMode === 'daily') {
+            seedContainer.classList.add('hidden');
+        } else {
+            seedContainer.classList.remove('hidden');
+            document.getElementById('game-seed').textContent = this.currentSeed;
+        }
+
+        // Update emoji grid and results table
+        document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
         this.results.copyResultsTable();
+
+        // Remove any daily elements that might be showing
+        this.ui.removeDailyElements();
 
         // Only send death link if it wasn't triggered by one
         if (!isDeathLink && apClient.isConnected() && apClient.isDeathLinkEnabled()) {
@@ -381,21 +437,62 @@ export class GameApp {
         }
     }
 
-    /**
-     * Handles death link event
-     * @param {string} reason - Reason for death link trigger
-     */
     handleDeathLink(reason) {
         this.skipGame(true);
     }
 
-    /**
-     * Handles a correct guess
-     */
-    handleCorrectGuess() {
+    async handleCorrectGuess() {
         this.timer.stopTimer();
-        if (this.isStreakMode) {
-            this.streakCount++; // Increment streak count
+        
+        if (this.gameMode === 'daily') {
+            const today = new Date().toISOString().split('T')[0];
+            const dailyNumber = this.ui.getDailyChallengeNumber();
+            
+            try {
+                // Increment player count first
+                await this.supabase.rpc('increment_daily_players', {
+                    challenge_date: today
+                });
+
+                // Fetch updated count
+                const { data } = await this.supabase
+                    .from('daily_players')
+                    .select('player_count')
+                    .eq('date', today)
+                    .single();
+
+                if (data) {
+                    this.currentDailyCount = data.player_count;
+                }
+
+                // Show game over first with the daily title
+                this.ui.showGameOver(
+                    `Congratulations! You completed Daily Challenge #${dailyNumber}!`,
+                    this.chosenCharacter.name
+                );
+
+                // Then update the player count display
+                if (this.currentDailyCount) {
+                    this.ui.updateDailyPlayerCount(this.currentDailyCount);
+                }
+
+                // Cache the daily challenge completion after successful increment
+                this.saveDailyChallengeCache({
+                    completed: true,
+                    character: this.chosenCharacter.name,
+                    guessHistory: this.guessHistory,
+                    playerCount: this.currentDailyCount
+                });
+            } catch (error) {
+                console.error('Error updating daily player count:', error);
+                // Still show game over even if count update fails
+                this.ui.showGameOver(
+                    `Congratulations! You completed Daily Challenge #${dailyNumber}!`,
+                    this.chosenCharacter.name
+                );
+            }
+        } else if (this.isStreakMode) {
+            this.streakCount++;
             this.ui.showGameOver(
                 `Congratulations! Continue your streak! Current streak: ${this.streakCount}`,
                 this.chosenCharacter.name,
@@ -410,40 +507,42 @@ export class GameApp {
                 this.currentSeed
             );
         }
-        document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory);
+        
+        document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
         this.results.copyResultsTable();
     }
 
-    /**
-     * Handles streak loss
-     */
     handleStreakLoss() {
         this.timer.stopTimer();
-        const finalStreak = this.streakCount; // Store the final streak before resetting
+        const finalStreak = this.streakCount;
         this.ui.showGameOver(
             `Game Over! Your streak ends at ${finalStreak}!`,
             this.chosenCharacter.name,
             this.currentSeed,
             true,
-            finalStreak // Pass the final streak count before resetting
+            finalStreak
         );
-        document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory);
+        document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
         this.results.copyResultsTable();
+
+        // Show name prompt for leaderboard entry
+        if (finalStreak > 0) {
+            this.leaderboardManager.showNamePrompt(finalStreak, this.selectedStreakMode);
+        }
+
         this.isStreakMode = false;
-        this.streakCount = 0; // Reset streak count after displaying
+        this.streakCount = 0;
     }
 
-    /**
-     * Resets the game state
-     */
     resetGame() {
         document.getElementById('game-over').classList.add('hidden');
         document.getElementById('game-setup').classList.remove('hidden');
         this.results.clearResults();
         this.timer.reset();
         
-        // Always clear guess history
+        // Always clear guess history and reset game mode
         this.guessHistory = [];
+        window.gameMode = null;
         
         if (this.isStreakMode) {
             // For streak mode, preserve streak count and start a new round
@@ -462,9 +561,6 @@ export class GameApp {
         }
     }
 
-    /**
-     * Generates a seed for a specific character
-     */
     generateSeedForCharacter() {
         try {
             const characterInput = document.getElementById('character-input');
@@ -490,11 +586,6 @@ export class GameApp {
         }
     }
 
-    /**
-     * Generates a unique seed that will select a specific character
-     * @param {string} character - Target character name
-     * @returns {string|null} Generated seed or null if failed
-     */
     generateUniqueSeedForCharacter(character) {
         let attempts = 0;
         const maxAttempts = 1000;
@@ -523,9 +614,6 @@ export class GameApp {
         return null;
     }
 
-    /**
-     * Starts game with user-provided seed
-     */
     startGameWithSeed() {
         const seedInput = document.getElementById('seed-input');
         if (!seedInput.value) {
@@ -540,6 +628,7 @@ export class GameApp {
         }
 
         this.gameMode = 'filler';
+        window.gameMode = 'filler';
         this.currentSeed = seedInput.value;
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
@@ -554,11 +643,36 @@ export class GameApp {
         }
     }
 
-    /**
-     * Starts a daily challenge game
-     */
-    startDailyGame() {
+    async startDailyGame() {
+        // Check if daily challenge is already completed
+        const cache = this.getDailyChallengeCache();
+        if (cache?.completed) {
+            // Show cached results
+            this.gameMode = 'daily';
+            window.gameMode = 'daily';
+            document.getElementById('game-setup').classList.add('hidden');
+            document.getElementById('game-over').classList.remove('hidden');
+            
+            // Display cached results
+            this.ui.showGameOver(
+                `You've already completed today's challenge!`,
+                cache.character
+            );
+            
+            // Restore guess history and display results
+            this.guessHistory = cache.guessHistory;
+            document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
+            this.results.displayCachedResults(cache.guessHistory);
+            
+            if (cache.playerCount) {
+                this.ui.updateDailyPlayerCount(cache.playerCount);
+            }
+            
+            return;
+        }
+
         this.gameMode = 'daily';
+        window.gameMode = 'daily';
         this.currentSeed = this.getDailySeed();
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
@@ -567,16 +681,25 @@ export class GameApp {
         try {
             this.chosenCharacter = this.characterSelector.selectRandomCharacter('normal', this.currentSeed);
             this.timer.startTimer();
+
+            // Get current daily player count
+            const today = new Date().toISOString().split('T')[0];
+            const { data } = await this.supabase
+                .from('daily_players')
+                .select('player_count')
+                .eq('date', today)
+                .single();
+
+            if (data) {
+                this.currentDailyCount = data.player_count;
+            }
         } catch (error) {
-            alert('Error: Could not find a valid character. Please try again.');
+            console.error('Error starting daily game:', error);
+            alert('Error: Could not start daily game. Please try again.');
             this.resetGame();
         }
     }
 
-    /**
-     * Generates seed for daily challenge
-     * @returns {string} Generated seed based on current date
-     */
     getDailySeed() {
         const date = new Date();
         return `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`;

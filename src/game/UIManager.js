@@ -1,4 +1,16 @@
+/**
+ * Manages all UI-related functionality and updates.
+ * Handles display updates, animations, and UI state management.
+ */
 export class UIManager {
+    /**
+     * Initializes the UI manager.
+     * @param {Object} supabase - Supabase client instance for database operations
+     */
+    constructor(supabase) {
+        this.supabase = supabase;
+    }
+
     toggleStreakModeUI(enabled) {
         const dailyModeButton = document.getElementById('daily-mode');
         const seedSection = document.getElementById('seed-section');
@@ -44,23 +56,66 @@ export class UIManager {
         return diffDays + 1;
     }
 
+    updateDailyPlayerCount(count) {
+        if (window.gameMode !== 'daily') return;
+
+        // Remove any existing count display
+        this.removeDailyPlayerCount();
+
+        // Create and add new count display
+        const countElement = document.createElement('div');
+        countElement.className = 'daily-player-count';
+        countElement.textContent = `${count} ${count === 1 ? 'player has' : 'players have'} completed today's challenge`;
+        
+        const emojiGrid = document.getElementById('emoji-grid');
+        if (emojiGrid && emojiGrid.parentNode) {
+            emojiGrid.parentNode.insertBefore(countElement, emojiGrid.nextSibling);
+        }
+    }
+
+    removeDailyPlayerCount() {
+        const existingCount = document.querySelector('.daily-player-count');
+        if (existingCount) {
+            existingCount.remove();
+        }
+    }
+
     showGameOver(message, character, seed, isStreak = false, streakCount = 0) {
         document.getElementById('game-play').classList.add('hidden');
         document.getElementById('game-over').classList.remove('hidden');
         document.getElementById('game-over-message').textContent = message;
         document.getElementById('correct-character').textContent = character;
         
-        // Always remove any existing streak counter first
         this.removeStreakCounter();
         
         const seedContainer = document.getElementById('game-seed-container');
+        const emojiGrid = document.getElementById('emoji-grid');
+        
         if (isStreak) {
             seedContainer.classList.add('hidden');
             this.addStreakCounter(streakCount);
+        } else if (window.gameMode === 'daily') {
+            seedContainer.classList.add('hidden');
+            // Add daily challenge title above emoji grid
+            const dailyTitle = document.createElement('div');
+            dailyTitle.className = 'daily-title';
+            dailyTitle.textContent = `Faustdle Day #${this.getDailyChallengeNumber()}`;
+            if (emojiGrid && emojiGrid.parentNode) {
+                emojiGrid.parentNode.insertBefore(dailyTitle, emojiGrid);
+            }
         } else {
             seedContainer.classList.remove('hidden');
             document.getElementById('game-seed').textContent = seed;
         }
+    }
+
+    removeDailyElements() {
+        // Remove daily title if it exists
+        const dailyTitle = document.querySelector('.daily-title');
+        if (dailyTitle) {
+            dailyTitle.remove();
+        }
+        this.removeDailyPlayerCount();
     }
 
     removeStreakCounter() {
@@ -78,3 +133,5 @@ export class UIManager {
         emojiGrid.parentNode.insertBefore(streakText, emojiGrid);
     }
 }
+
+export default UIManager;

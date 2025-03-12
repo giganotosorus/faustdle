@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "seedrandom": "^3.0.5",
-    "ws": "^8.16.0"
+    "ws": "^8.16.0",
+    "@supabase/supabase-js": "^2.39.3"
   },
   "devDependencies": {
     "vite": "^5.0.10"
