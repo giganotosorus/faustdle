@@ -15,9 +15,7 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets'
   },
-  resolve: {
-    alias: {
-      '@supabase/supabase-js': '/node_modules/@supabase/supabase-js/dist/module/index.js'
-    }
+  optimizeDeps: {
+    include: ['@supabase/supabase-js']
   }
 });
