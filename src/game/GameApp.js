@@ -31,11 +31,16 @@ export default class GameApp {
         this.isStreakMode = false;        // Whether streak mode is active
         this.selectedStreakMode = 'normal'; // Selected difficulty for streak mode
         
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('Supabase configuration missing. Please check your environment variables.');
+            return;
+        }
+
         // Initialize Supabase client for database operations
-        this.supabase = createClient(
-            import.meta.env.VITE_SUPABASE_URL,
-            import.meta.env.VITE_SUPABASE_ANON_KEY
-        );
+        this.supabase = createClient(supabaseUrl, supabaseKey);
 
         // Initialize game component managers
         this.autocomplete = new AutocompleteManager();    // Handles character name suggestions

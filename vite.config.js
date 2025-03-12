@@ -13,22 +13,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    assetsDir: 'assets',
-    rollupOptions: {
-      external: ['@supabase/supabase-js'],
-      output: {
-        globals: {
-          '@supabase/supabase-js': 'supabase'
-        }
-      }
-    }
-  },
-  optimizeDeps: {
-    include: ['@supabase/supabase-js']
-  },
-  resolve: {
-    alias: {
-      '@supabase/supabase-js': '/node_modules/@supabase/supabase-js/dist/module/index.js'
-    }
+    assetsDir: 'assets'
   }
 });
