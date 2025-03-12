@@ -30,16 +30,8 @@ export default class GameApp {
         this.isStreakMode = false;        // Whether streak mode is active
         this.selectedStreakMode = 'normal'; // Selected difficulty for streak mode
         
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-        if (!supabaseUrl || !supabaseKey) {
-            console.error('Supabase configuration missing. Please check your environment variables.');
-            return;
-        }
-
-        // Initialize Supabase client using the global supabase object
-        this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        // Initialize Supabase client
+        this.initializeSupabase();
 
         // Initialize game component managers
         this.autocomplete = new AutocompleteManager();    // Handles character name suggestions
@@ -61,6 +53,20 @@ export default class GameApp {
         this.setupEventListeners();
         this.setupAutocomplete();
         console.log('GameApp initialized');
+    }
+
+    initializeSupabase() {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('Supabase configuration missing. Please check your environment variables.');
+            return;
+        }
+
+        // Initialize Supabase client using the global supabase object
+        this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        console.log('Supabase client initialized');
     }
 
     getDailyChallengeCache() {
