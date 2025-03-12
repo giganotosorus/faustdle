@@ -96,25 +96,39 @@ export class UIManager {
             this.addStreakCounter(streakCount);
         } else if (window.gameMode === 'daily') {
             seedContainer.classList.add('hidden');
-            // Add daily challenge title above emoji grid
-            const dailyTitle = document.createElement('div');
-            dailyTitle.className = 'daily-title';
-            dailyTitle.textContent = `Faustdle Day #${this.getDailyChallengeNumber()}`;
-            if (emojiGrid && emojiGrid.parentNode) {
-                emojiGrid.parentNode.insertBefore(dailyTitle, emojiGrid);
-            }
+            // Always add daily challenge title for daily mode
+            this.addDailyTitle();
         } else {
             seedContainer.classList.remove('hidden');
             document.getElementById('game-seed').textContent = seed;
         }
     }
 
-    removeDailyElements() {
-        // Remove daily title if it exists
-        const dailyTitle = document.querySelector('.daily-title');
-        if (dailyTitle) {
-            dailyTitle.remove();
+    // New method to add daily title
+    addDailyTitle() {
+        // Remove any existing daily title first
+        this.removeDailyTitle();
+        
+        const dailyTitle = document.createElement('div');
+        dailyTitle.className = 'daily-title';
+        dailyTitle.textContent = `Faustdle Day #${this.getDailyChallengeNumber()}`;
+        
+        const emojiGrid = document.getElementById('emoji-grid');
+        if (emojiGrid && emojiGrid.parentNode) {
+            emojiGrid.parentNode.insertBefore(dailyTitle, emojiGrid);
         }
+    }
+
+    // New method to remove daily title
+    removeDailyTitle() {
+        const existingTitle = document.querySelector('.daily-title');
+        if (existingTitle) {
+            existingTitle.remove();
+        }
+    }
+
+    removeDailyElements() {
+        this.removeDailyTitle();
         this.removeDailyPlayerCount();
     }
 
