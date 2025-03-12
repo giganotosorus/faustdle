@@ -324,6 +324,17 @@ tr:hover {
   border-radius: 0.5rem;
 }
 
+.streak-count {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: #e2bd8cad;
+    border-radius: 0.5rem;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -617,4 +628,47 @@ tr:hover {
   background: #fee2e2;
   border-radius: 0.5rem;
   margin: 1rem 0;
+}
+
+.streak-mode-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+
+.streak-mode-dialog.hidden {
+    display: none;
+}
+
+.streak-mode-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    width: 100%;
+    max-width: 400px;
+}
+
+.streak-mode-content h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: var(--secondary-color);
+    text-align: center;
+}
+
+.streak-mode-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.streak-mode-buttons .btn {
+    width: 100%;
+    height: var(--button-height);
 }
