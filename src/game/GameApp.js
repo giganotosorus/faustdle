@@ -20,6 +20,7 @@ export default class GameApp {
         this.streakCount = 0;
         this.isStreakMode = false;
         this.selectedStreakMode = 'normal';
+        this.previousWinner = null;
         
         this.initializeSupabase();
         this.autocomplete = new AutocompleteManager();
@@ -330,6 +331,14 @@ export default class GameApp {
             if (apClient.isConnected()) {
                 apClient.setGameMode(mode);
             }
+
+            if (this.isStreakMode && this.previousWinner) {
+                setTimeout(() => {
+                    const results = compareTraits(names[this.previousWinner], this.chosenCharacter.traits);
+                    this.results.displayResults(this.previousWinner, results);
+                    this.guessHistory.push({ name: this.previousWinner, results });
+                }, 100);
+            }
         } catch (error) {
             alert('Error: Could not find a valid character. Please try again.');
             this.resetGame();
@@ -420,6 +429,10 @@ export default class GameApp {
     async handleCorrectGuess() {
         this.timer.stopTimer();
         
+        if (this.isStreakMode) {
+            this.previousWinner = this.chosenCharacter.name;
+        }
+        
         if (this.gameMode === 'daily') {
             const today = new Date().toISOString().split('T')[0];
             const dailyNumber = this.ui.getDailyChallengeNumber();
@@ -501,6 +514,7 @@ export default class GameApp {
 
         this.isStreakMode = false;
         this.streakCount = 0;
+        this.previousWinner = null;
     }
 
     resetGame() {
@@ -523,6 +537,7 @@ export default class GameApp {
             this.gameMode = null;
             this.streakCount = 0;
             this.isStreakMode = false;
+            this.previousWinner = null;
             this.ui.toggleStreakModeUI(false);
         }
     }
@@ -553,7 +568,7 @@ export default class GameApp {
 
     generateUniqueSeedForCharacter(character) {
         let attempts = 0;
-        const maxAttempts = 1000;
+        const maxAttempts = 10000;
         
         while (attempts < maxAttempts) {
             try {
