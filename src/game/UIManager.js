@@ -150,7 +150,7 @@ export class UIManager {
     shareToTwitter() {
         const dailyTitle = `Faustdle Day #${this.getDailyChallengeNumber()}`;
         const emojiGrid = document.getElementById('emoji-grid').textContent;
-        const text = encodeURIComponent(`${dailyTitle}\n\n${emojiGrid}\n\nhttps://faustdle.com`);
+        const text = encodeURIComponent(`${dailyTitle}\n\n${emojiGrid}\n\nhttps://faustdle.com #OnePiece`);
         window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
     }
 
@@ -158,7 +158,7 @@ export class UIManager {
         const dailyTitle = `Faustdle Day #${this.getDailyChallengeNumber()}`;
         const emojiGrid = document.getElementById('emoji-grid').textContent;
         const blueskyGrid = emojiGrid.replace(/\n/g, '<br>');
-        const text = encodeURIComponent(`${dailyTitle}<br><br>${blueskyGrid}<br><br>https://faustdle.com`);
+        const text = encodeURIComponent(`${dailyTitle}<br><br>${blueskyGrid}<br><br>https://faustdle.com #OnePiece`);
         window.open(`https://bsky.app/intent/compose?text=${text}`, '_blank');
     }
 
