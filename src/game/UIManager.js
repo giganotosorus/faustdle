@@ -117,7 +117,7 @@ export class UIManager {
         // Twitter share button
         const twitterButton = document.createElement('button');
         twitterButton.className = 'btn btn-twitter';
-        twitterButton.textContent = 'Share on X';
+        twitterButton.textContent = 'Share on Twitter';
         twitterButton.onclick = () => this.shareToTwitter();
         
         // Bluesky share button
