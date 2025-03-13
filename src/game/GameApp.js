@@ -187,7 +187,6 @@ export default class GameApp {
 
         if (useGeneratedSeedButton) {
             useGeneratedSeedButton.addEventListener('click', () => {
-                const generatedSeed = document.getElementById('seed-result').textContent;
                 document.getElementById('seed-generator').classList.add('hidden');
                 document.getElementById('game-setup').classList.remove('hidden');
                 document.getElementById('seed-input').value = generatedSeed;

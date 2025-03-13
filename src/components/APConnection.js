@@ -52,8 +52,8 @@ export class APConnection {
             <div class="other-dialog-content">
                 <h3>Other Options</h3>
                 <div class="other-buttons">
-                    <button id="streak-mode" class="btn btn-streak">Streak Mode</button>
                     <button id="faq-button" class="btn btn-faq">FAQ</button>
+                    <button id="generate-seed" class="btn btn-generate">Obtain seed for character</button>
                     <button id="ap-connect-button" class="btn btn-ap">Connect to Archipelago</button>
                     <button id="other-cancel" class="btn btn-secondary">Back</button>
                 </div>

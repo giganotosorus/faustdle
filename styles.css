@@ -185,11 +185,11 @@ input:focus {
 
 .btn-generate {
   width: 100%;
-  background: var(--secondary-color);
+  background: #ff1d65;
 }
 
 .btn-generate:hover {
-  background: #334155;
+  background: #cc1751;
 }
 
 .btn-secondary {
