@@ -558,11 +558,12 @@ tr:hover {
 }
 
 .btn-streak {
-  background: #f59e0b;
+  background: #1e293b;
+  width: 100%;
 }
 
 .btn-streak:hover {
-  background: #d97706;
+  background: #334155;
 }
 
 .btn-faq {
@@ -810,4 +811,35 @@ tr:hover {
     display: flex;
     gap: 1rem;
     justify-content: center;
+}
+
+.share-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.btn-share {
+    background: #64748b;
+}
+
+.btn-share:hover {
+    background: #475569;
+}
+
+.btn-twitter {
+    background: #000000;
+}
+
+.btn-twitter:hover {
+    background: #333333;
+}
+
+.btn-bluesky {
+    background: #0085ff;
+}
+
+.btn-bluesky:hover {
+    background: #0066cc;
 }

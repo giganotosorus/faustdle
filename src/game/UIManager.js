@@ -96,17 +96,72 @@ export class UIManager {
             this.addStreakCounter(streakCount);
         } else if (window.gameMode === 'daily') {
             seedContainer.classList.add('hidden');
-            // Always add daily challenge title for daily mode
             this.addDailyTitle();
+            this.addShareButtons();
         } else {
             seedContainer.classList.remove('hidden');
             document.getElementById('game-seed').textContent = seed;
         }
     }
 
-    // New method to add daily title
+    addShareButtons() {
+        const shareContainer = document.createElement('div');
+        shareContainer.className = 'share-buttons';
+        
+        // Copy button
+        const copyButton = document.createElement('button');
+        copyButton.className = 'btn btn-share';
+        copyButton.textContent = 'Copy Results';
+        copyButton.onclick = () => this.copyResults();
+        
+        // Twitter share button
+        const twitterButton = document.createElement('button');
+        twitterButton.className = 'btn btn-twitter';
+        twitterButton.textContent = 'Share on X';
+        twitterButton.onclick = () => this.shareToTwitter();
+        
+        // Bluesky share button
+        const blueskyButton = document.createElement('button');
+        blueskyButton.className = 'btn btn-bluesky';
+        blueskyButton.textContent = 'Share on Bluesky';
+        blueskyButton.onclick = () => this.shareToBluesky();
+        
+        shareContainer.appendChild(copyButton);
+        shareContainer.appendChild(twitterButton);
+        shareContainer.appendChild(blueskyButton);
+        
+        const resultsTable = document.getElementById('results-table-final');
+        resultsTable.parentNode.insertBefore(shareContainer, resultsTable);
+    }
+
+    copyResults() {
+        const dailyTitle = `Faustdle Day #${this.getDailyChallengeNumber()}`;
+        const emojiGrid = document.getElementById('emoji-grid').textContent;
+        const text = `${dailyTitle}\n\n${emojiGrid}\n\nhttps://faustdle.com`;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Results copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy results:', err);
+            alert('Failed to copy results');
+        });
+    }
+
+    shareToTwitter() {
+        const dailyTitle = `Faustdle Day #${this.getDailyChallengeNumber()}`;
+        const emojiGrid = document.getElementById('emoji-grid').textContent;
+        const text = encodeURIComponent(`${dailyTitle}\n\n${emojiGrid}\n\nhttps://faustdle.com`);
+        window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+    }
+
+    shareToBluesky() {
+        const dailyTitle = `Faustdle Day #${this.getDailyChallengeNumber()}`;
+        const emojiGrid = document.getElementById('emoji-grid').textContent;
+        const text = encodeURIComponent(`${dailyTitle}\n\n${emojiGrid}\n\nhttps://faustdle.com`);
+        window.open(`https://bsky.app/intent/compose?text=${text}`, '_blank');
+    }
+
     addDailyTitle() {
-        // Remove any existing daily title first
         this.removeDailyTitle();
         
         const dailyTitle = document.createElement('div');
@@ -119,7 +174,6 @@ export class UIManager {
         }
     }
 
-    // New method to remove daily title
     removeDailyTitle() {
         const existingTitle = document.querySelector('.daily-title');
         if (existingTitle) {

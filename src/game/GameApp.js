@@ -9,45 +9,31 @@ import { UIManager } from './UIManager.js';
 import { ResultsManager } from './ResultsManager.js';
 import { LeaderboardManager } from './LeaderboardManager.js';
 
-/**
- * Main game application class that manages the core game logic, state, and interactions.
- * Coordinates between different managers and handles game flow.
- */
 export default class GameApp {
-    /**
-     * Initializes the game application and sets up all necessary components.
-     * Creates manager instances, establishes database connection, and sets up event listeners.
-     */
     constructor() {
-        // Initialize core game state variables
-        this.chosenCharacter = null;      // Currently selected character for the game
-        this.currentSeed = null;          // Current game seed
-        this.guessHistory = [];           // Array of player guesses and their results
-        this.gameMode = null;             // Current game mode (normal, hard, filler, daily)
-        this.startTime = null;            // Game start timestamp
-        this.elapsedTimeInterval = null;   // Timer interval reference
-        this.streakCount = 0;             // Current streak in streak mode
-        this.isStreakMode = false;        // Whether streak mode is active
-        this.selectedStreakMode = 'normal'; // Selected difficulty for streak mode
+        this.chosenCharacter = null;
+        this.currentSeed = null;
+        this.guessHistory = [];
+        this.gameMode = null;
+        this.startTime = null;
+        this.elapsedTimeInterval = null;
+        this.streakCount = 0;
+        this.isStreakMode = false;
+        this.selectedStreakMode = 'normal';
         
-        // Initialize Supabase client
         this.initializeSupabase();
-
-        // Initialize game component managers
-        this.autocomplete = new AutocompleteManager();    // Handles character name suggestions
-        this.characterSelector = new CharacterSelector(); // Manages character selection logic
-        this.timer = new TimerManager();                 // Handles game timing
-        this.ui = new UIManager(this.supabase);          // Manages UI updates and display
-        this.results = new ResultsManager();             // Handles game results display
-        this.leaderboardManager = new LeaderboardManager(this.supabase); // Manages leaderboard functionality
+        this.autocomplete = new AutocompleteManager();
+        this.characterSelector = new CharacterSelector();
+        this.timer = new TimerManager();
+        this.ui = new UIManager(this.supabase);
+        this.results = new ResultsManager();
+        this.leaderboardManager = new LeaderboardManager(this.supabase);
         this.leaderboardManager.createLeaderboardDialog();
         
-        // Set up death link event listener for Archipelago integration
         document.addEventListener('death_link_triggered', (event) => {
             this.handleDeathLink(`Death Link from ${event.detail.source}`);
         });
 
-        // Initialize Archipelago connection and UI components
         this.initializeAP();
         this.ui.updateDailyCountdown();
         this.setupEventListeners();
@@ -64,7 +50,6 @@ export default class GameApp {
             return;
         }
 
-        // Initialize Supabase client using the global supabase object
         this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         console.log('Supabase client initialized');
     }
@@ -77,12 +62,10 @@ export default class GameApp {
             const data = JSON.parse(cache);
             const today = new Date().toISOString().split('T')[0];
             
-            // Check if cache is from today
             if (data.date === today) {
                 return data;
             }
             
-            // Clear expired cache
             localStorage.removeItem('dailyChallenge');
             return null;
         } catch (error) {
@@ -104,8 +87,33 @@ export default class GameApp {
         }
     }
 
+    showStreakModeDialog() {
+        let dialog = document.getElementById('streak-mode-dialog');
+        if (!dialog) {
+            dialog = document.createElement('div');
+            dialog.id = 'streak-mode-dialog';
+            dialog.className = 'streak-mode-dialog';
+            dialog.innerHTML = `
+                <div class="streak-mode-content">
+                    <h3>Select Streak Mode Difficulty</h3>
+                    <div class="streak-mode-buttons">
+                        <button class="btn streak-mode-select" data-mode="normal">Normal Mode</button>
+                        <button class="btn btn-hard streak-mode-select" data-mode="hard">Hard Mode</button>
+                        <button class="btn btn-filler streak-mode-select" data-mode="filler">Filler Mode</button>
+                        <button class="btn btn-secondary" id="streak-mode-cancel">Cancel</button>
+                    </div>
+                </div>
+            `;
+            document.querySelector('.container').appendChild(dialog);
+
+            dialog.querySelector('#streak-mode-cancel').addEventListener('click', () => {
+                dialog.classList.add('hidden');
+            });
+        }
+        dialog.classList.remove('hidden');
+    }
+
     setupEventListeners() {
-        // Game mode buttons
         const normalModeButton = document.getElementById('normal-mode');
         const hardModeButton = document.getElementById('hard-mode');
         const fillerModeButton = document.getElementById('filler-mode');
@@ -122,7 +130,6 @@ export default class GameApp {
         const faqBackButton = document.getElementById('faq-back');
         const streakModeButton = document.getElementById('streak-mode');
 
-        // Add leaderboard button to other dialog
         const otherButtons = document.querySelector('.other-buttons');
         const leaderboardButton = document.createElement('button');
         leaderboardButton.id = 'leaderboard-button';
@@ -132,12 +139,10 @@ export default class GameApp {
             document.getElementById('other-dialog').classList.add('hidden');
             const leaderboardDialog = document.getElementById('leaderboard-dialog');
             leaderboardDialog.classList.remove('hidden');
-            // Load normal mode leaderboard by default
             this.leaderboardManager.loadLeaderboard('normal');
         });
         otherButtons.insertBefore(leaderboardButton, otherButtons.querySelector('#other-cancel'));
 
-        // Set up click handlers for all buttons
         if (normalModeButton) {
             normalModeButton.addEventListener('click', () => this.startGame('normal'));
         }
@@ -156,12 +161,18 @@ export default class GameApp {
 
         if (streakModeButton) {
             streakModeButton.addEventListener('click', () => {
-                document.getElementById('other-dialog').classList.add('hidden');
                 this.showStreakModeDialog();
             });
         }
 
-        // Add event listeners for streak mode selection
+        if (generateSeedButton) {
+            generateSeedButton.addEventListener('click', () => {
+                document.getElementById('other-dialog').classList.add('hidden');
+                document.getElementById('game-setup').classList.add('hidden');
+                document.getElementById('seed-generator').classList.remove('hidden');
+            });
+        }
+
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('streak-mode-select')) {
                 this.selectedStreakMode = e.target.dataset.mode;
@@ -169,13 +180,6 @@ export default class GameApp {
                 document.getElementById('streak-mode-dialog').classList.add('hidden');
             }
         });
-
-        if (generateSeedButton) {
-            generateSeedButton.addEventListener('click', () => {
-                document.getElementById('game-setup').classList.add('hidden');
-                document.getElementById('seed-generator').classList.remove('hidden');
-            });
-        }
 
         if (generateSeedForCharacterButton) {
             generateSeedForCharacterButton.addEventListener('click', () => this.generateSeedForCharacter());
@@ -229,7 +233,6 @@ export default class GameApp {
             });
         }
 
-        // Setup enter key handlers
         const guessInput = document.getElementById('guess-input');
         if (guessInput) {
             guessInput.addEventListener('keypress', (e) => {
@@ -264,7 +267,6 @@ export default class GameApp {
             new APConnection(seedGenerator);
         }
 
-        // Handle AP connection requests
         document.addEventListener('ap-connect-request', async (event) => {
             const { address, port, slot, password, deathLink } = event.detail;
             const success = await apClient.connect(address, port, slot, password, deathLink);
@@ -278,7 +280,6 @@ export default class GameApp {
             }
         });
 
-        // Set up AP client event listeners
         apClient.on('connected', () => {
             this.updateGameModesVisibility(true);
         });
@@ -308,34 +309,6 @@ export default class GameApp {
         }
     }
 
-    showStreakModeDialog() {
-        let dialog = document.getElementById('streak-mode-dialog');
-        if (!dialog) {
-            dialog = document.createElement('div');
-            dialog.id = 'streak-mode-dialog';
-            dialog.className = 'streak-mode-dialog';
-            dialog.innerHTML = `
-                <div class="streak-mode-content">
-                    <h3>Select Streak Mode Difficulty</h3>
-                    <div class="streak-mode-buttons">
-                        <button class="btn streak-mode-select" data-mode="normal">Normal Mode</button>
-                        <button class="btn btn-hard streak-mode-select" data-mode="hard">Hard Mode</button>
-                        <button class="btn btn-filler streak-mode-select" data-mode="filler">Filler Mode</button>
-                        <button class="btn btn-secondary" id="streak-mode-cancel">Cancel</button>
-                    </div>
-                </div>
-            `;
-            document.querySelector('.container').appendChild(dialog);
-
-            // Add cancel button listener
-            dialog.querySelector('#streak-mode-cancel').addEventListener('click', () => {
-                dialog.classList.add('hidden');
-                document.getElementById('other-dialog').classList.remove('hidden');
-            });
-        }
-        dialog.classList.remove('hidden');
-    }
-
     startStreakMode() {
         this.isStreakMode = true;
         this.streakCount = 0;
@@ -345,7 +318,7 @@ export default class GameApp {
 
     startGame(mode) {
         this.gameMode = mode;
-        window.gameMode = mode; // Reset game mode
+        window.gameMode = mode;
         this.currentSeed = Math.random().toString(36).substring(2, 15);
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
@@ -376,11 +349,10 @@ export default class GameApp {
         
         const results = compareTraits(names[exactName], this.chosenCharacter.traits);
         this.results.displayResults(exactName, results);
-        this.guessHistory.push({ name: exactName, results }); // Store name with results
+        this.guessHistory.push({ name: exactName, results });
         
         const isCorrectGuess = exactName === this.chosenCharacter.name;
         
-        // Check for streak mode loss condition based on game mode
         const maxGuesses = this.gameMode === 'normal' ? 6 : 8;
         if (this.isStreakMode && this.guessHistory.length >= maxGuesses && !isCorrectGuess) {
             this.handleStreakLoss();
@@ -415,13 +387,11 @@ export default class GameApp {
         document.getElementById('game-play').classList.add('hidden');
         document.getElementById('game-over').classList.remove('hidden');
         
-        // Show appropriate message and character name
         document.getElementById('game-over-message').textContent = isDeathLink ? 
             'Game Over - Death Link forced skip!' : 
             'Game skipped!';
         document.getElementById('correct-character').textContent = this.chosenCharacter.name;
         
-        // Show seed for non-daily modes
         const seedContainer = document.getElementById('game-seed-container');
         if (this.gameMode === 'daily') {
             seedContainer.classList.add('hidden');
@@ -430,14 +400,11 @@ export default class GameApp {
             document.getElementById('game-seed').textContent = this.currentSeed;
         }
 
-        // Update emoji grid and results table
         document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
         this.results.copyResultsTable();
 
-        // Remove any daily elements that might be showing
         this.ui.removeDailyElements();
 
-        // Only send death link if it wasn't triggered by one
         if (!isDeathLink && apClient.isConnected() && apClient.isDeathLinkEnabled()) {
             apClient.sendDeathLink('Skipped game');
         }
@@ -459,12 +426,10 @@ export default class GameApp {
             const dailyNumber = this.ui.getDailyChallengeNumber();
             
             try {
-                // Increment player count first
                 await this.supabase.rpc('increment_daily_players', {
                     challenge_date: today
                 });
 
-                // Fetch updated count
                 const { data } = await this.supabase
                     .from('daily_players')
                     .select('player_count')
@@ -475,18 +440,15 @@ export default class GameApp {
                     this.currentDailyCount = data.player_count;
                 }
 
-                // Show game over first with the daily title
                 this.ui.showGameOver(
                     `Congratulations! You completed Daily Challenge #${dailyNumber}!`,
                     this.chosenCharacter.name
                 );
 
-                // Then update the player count display
                 if (this.currentDailyCount) {
                     this.ui.updateDailyPlayerCount(this.currentDailyCount);
                 }
 
-                // Cache the daily challenge completion after successful increment
                 this.saveDailyChallengeCache({
                     completed: true,
                     character: this.chosenCharacter.name,
@@ -495,7 +457,6 @@ export default class GameApp {
                 });
             } catch (error) {
                 console.error('Error updating daily player count:', error);
-                // Still show game over even if count update fails
                 this.ui.showGameOver(
                     `Congratulations! You completed Daily Challenge #${dailyNumber}!`,
                     this.chosenCharacter.name
@@ -535,7 +496,6 @@ export default class GameApp {
         document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
         this.results.copyResultsTable();
 
-        // Show name prompt for leaderboard entry
         if (finalStreak > 0) {
             this.leaderboardManager.showNamePrompt(finalStreak, this.selectedStreakMode);
         }
@@ -550,18 +510,15 @@ export default class GameApp {
         this.results.clearResults();
         this.timer.reset();
         
-        // Always clear guess history and reset game mode
         this.guessHistory = [];
         window.gameMode = null;
         
         if (this.isStreakMode) {
-            // For streak mode, preserve streak count and start a new round
-            const currentStreak = this.streakCount; // Save current streak
-            document.getElementById('game-setup').classList.add('hidden'); // Keep game UI visible
+            const currentStreak = this.streakCount;
+            document.getElementById('game-setup').classList.add('hidden');
             this.startGame(this.selectedStreakMode);
-            this.streakCount = currentStreak; // Restore streak count
+            this.streakCount = currentStreak;
         } else {
-            // Reset everything for non-streak mode
             this.chosenCharacter = null;
             this.currentSeed = null;
             this.gameMode = null;
@@ -581,7 +538,6 @@ export default class GameApp {
                 return;
             }
 
-            // Generate a unique seed for this character
             const characterSeed = this.generateUniqueSeedForCharacter(exactName);
             
             if (characterSeed) {
@@ -605,9 +561,7 @@ export default class GameApp {
                 const seed = Math.random().toString(36).substring(2, 15);
                 const selectedCharacter = this.characterSelector.selectRandomCharacter('filler', seed);
                 
-                // Check if the selected character matches the desired character
                 if (selectedCharacter.name === character) {
-                    // Verify that the character would actually be selectable in some mode
                     const difficulty = selectedCharacter.traits[9];
                     if (difficulty === 'E' || difficulty === 'H' || difficulty === 'F') {
                         return seed;
@@ -631,7 +585,6 @@ export default class GameApp {
             return;
         }
 
-        // Easter egg: Check for "imu" seed
         if (seedInput.value.toLowerCase() === 'imu') {
             window.location.reload();
             return;
@@ -654,22 +607,18 @@ export default class GameApp {
     }
 
     async startDailyGame() {
-        // Check if daily challenge is already completed
         const cache = this.getDailyChallengeCache();
         if (cache?.completed) {
-            // Show cached results
             this.gameMode = 'daily';
             window.gameMode = 'daily';
             document.getElementById('game-setup').classList.add('hidden');
             document.getElementById('game-over').classList.remove('hidden');
             
-            // Display cached results
             this.ui.showGameOver(
                 `You've already completed today's challenge!`,
                 cache.character
             );
             
-            // Restore guess history and display results
             this.guessHistory = cache.guessHistory;
             document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
             this.results.displayCachedResults(cache.guessHistory);
@@ -692,7 +641,6 @@ export default class GameApp {
             this.chosenCharacter = this.characterSelector.selectRandomCharacter('normal', this.currentSeed);
             this.timer.startTimer();
 
-            // Get current daily player count
             const today = new Date().toISOString().split('T')[0];
             const { data } = await this.supabase
                 .from('daily_players')
