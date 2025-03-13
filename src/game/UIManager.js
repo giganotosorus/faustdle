@@ -157,7 +157,8 @@ export class UIManager {
     shareToBluesky() {
         const dailyTitle = `Faustdle Day #${this.getDailyChallengeNumber()}`;
         const emojiGrid = document.getElementById('emoji-grid').textContent;
-        const text = encodeURIComponent(`${dailyTitle}\n\n${emojiGrid}\n\nhttps://faustdle.com`);
+        const blueskyGrid = emojiGrid.replace(/\n/g, '<br>');
+        const text = encodeURIComponent(`${dailyTitle}<br><br>${blueskyGrid}<br><br>https://faustdle.com`);
         window.open(`https://bsky.app/intent/compose?text=${text}`, '_blank');
     }
 
