@@ -87,6 +87,8 @@ export class UIManager {
         document.getElementById('correct-character').textContent = character;
         
         this.removeStreakCounter();
+        this.removeDailyElements();
+        this.removeShareButtons();
         
         const seedContainer = document.getElementById('game-seed-container');
         const emojiGrid = document.getElementById('emoji-grid');
@@ -105,6 +107,8 @@ export class UIManager {
     }
 
     addShareButtons() {
+        this.removeShareButtons(); // Remove any existing share buttons first
+        
         const shareContainer = document.createElement('div');
         shareContainer.className = 'share-buttons';
         
@@ -134,6 +138,13 @@ export class UIManager {
         resultsTable.parentNode.insertBefore(shareContainer, resultsTable);
     }
 
+    removeShareButtons() {
+        const existingShareButtons = document.querySelector('.share-buttons');
+        if (existingShareButtons) {
+            existingShareButtons.remove();
+        }
+    }
+
     copyResults() {
         const dailyTitle = `Faustdle Day #${this.getDailyChallengeNumber()}`;
         const emojiGrid = document.getElementById('emoji-grid').textContent;
@@ -157,8 +168,7 @@ export class UIManager {
     shareToBluesky() {
         const dailyTitle = `Faustdle Day #${this.getDailyChallengeNumber()}`;
         const emojiGrid = document.getElementById('emoji-grid').textContent;
-        const blueskyGrid = emojiGrid.replace(/\n/g, '<br>');
-        const text = encodeURIComponent(`${dailyTitle}<br><br>${blueskyGrid}<br><br>https://faustdle.com #OnePiece`);
+        const text = encodeURIComponent(`${dailyTitle} \n \n${emojiGrid} \n \n https://faustdle.com #OnePiece`);
         window.open(`https://bsky.app/intent/compose?text=${text}`, '_blank');
     }
 
@@ -185,6 +195,7 @@ export class UIManager {
     removeDailyElements() {
         this.removeDailyTitle();
         this.removeDailyPlayerCount();
+        this.removeShareButtons();
     }
 
     removeStreakCounter() {

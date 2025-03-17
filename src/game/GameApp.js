@@ -80,7 +80,9 @@ export default class GameApp {
             const today = new Date().toISOString().split('T')[0];
             const cacheData = {
                 date: today,
-                ...data
+                completed: data.completed,
+                character: data.character,
+                guessHistory: data.guessHistory
             };
             localStorage.setItem('dailyChallenge', JSON.stringify(cacheData));
         } catch (error) {
@@ -322,7 +324,12 @@ export default class GameApp {
         this.currentSeed = Math.random().toString(36).substring(2, 15);
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
-        document.getElementById('skip-button').classList.remove('hidden');
+        
+        // Only show skip button if not in daily mode
+        const skipButton = document.getElementById('skip-button');
+        if (skipButton) {
+            skipButton.style.display = mode === 'daily' ? 'none' : 'block';
+        }
         
         try {
             this.chosenCharacter = this.characterSelector.selectRandomCharacter(mode, this.currentSeed);
@@ -389,7 +396,7 @@ export default class GameApp {
     }
 
     skipGame(isDeathLink = false) {
-        if (!this.chosenCharacter) return;
+        if (!this.chosenCharacter || this.gameMode === 'daily') return;
         
         this.timer.stopTimer();
         document.getElementById('game-play').classList.add('hidden');
@@ -464,8 +471,7 @@ export default class GameApp {
                 this.saveDailyChallengeCache({
                     completed: true,
                     character: this.chosenCharacter.name,
-                    guessHistory: this.guessHistory,
-                    playerCount: this.currentDailyCount
+                    guessHistory: this.guessHistory
                 });
             } catch (error) {
                 console.error('Error updating daily player count:', error);
@@ -637,8 +643,20 @@ export default class GameApp {
             document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
             this.results.displayCachedResults(cache.guessHistory);
             
-            if (cache.playerCount) {
-                this.ui.updateDailyPlayerCount(cache.playerCount);
+            // Get current player count from database
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const { data } = await this.supabase
+                    .from('daily_players')
+                    .select('player_count')
+                    .eq('date', today)
+                    .single();
+
+                if (data) {
+                    this.ui.updateDailyPlayerCount(data.player_count);
+                }
+            } catch (error) {
+                console.error('Error fetching daily player count:', error);
             }
             
             return;
@@ -649,7 +667,7 @@ export default class GameApp {
         this.currentSeed = this.getDailySeed();
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
-        document.getElementById('skip-button').classList.add('hidden');
+        document.getElementById('skip-button').style.display = 'none';
         
         try {
             this.chosenCharacter = this.characterSelector.selectRandomCharacter('normal', this.currentSeed);
