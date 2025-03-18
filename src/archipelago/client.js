@@ -197,9 +197,9 @@ class FaustdleAPClient extends EventEmitter {
                     name: this.slot,
                     uuid: crypto.randomUUID(),
                     version: {
-                        major: 0,
-                        minor: 4,
-                        build: 2,
+                        major: 1,
+                        minor: 1,
+                        build: 1,
                         class: 'Version'
                     },
                     items_handling: 0b000,
