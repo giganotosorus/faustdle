@@ -10,6 +10,7 @@ import { ResultsManager } from './ResultsManager.js';
 import { LeaderboardManager } from './LeaderboardManager.js';
 import { DiscordManager } from '../discord/DiscordManager.js';
 import seedrandom from 'seedrandom';
+import { createClient } from '@supabase/supabase-js';
 
 // Make seedrandom available globally
 window.Math.seedrandom = seedrandom;
@@ -58,7 +59,7 @@ export default class GameApp {
             return;
         }
 
-        this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        this.supabase = createClient(supabaseUrl, supabaseKey);
         console.log('Supabase client initialized');
     }
 
