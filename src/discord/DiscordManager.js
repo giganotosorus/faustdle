@@ -57,12 +57,14 @@ export class DiscordManager {
         if (!this.connected) return;
 
         this.rpc.setActivity({
-            details: 'In Menu',
-            state: 'Choosing Game Mode',
+            details: 'Playing Faustdle',
             largeImageKey: 'faustdle',
             largeImageText: 'Faustdle',
             startTimestamp: this.startTimestamp,
-            instance: false
+            instance: false,
+            buttons: [
+                { label: 'Play Faustdle', url: 'https://faustdle.com' }
+            ]
         });
     }
 
@@ -144,6 +146,7 @@ export class DiscordManager {
 
     clearGuesses() {
         this.guessHistory = [];
+        this.setDefaultActivity();
     }
 
     disconnect() {
