@@ -516,7 +516,7 @@ export default class GameApp {
         } else if (this.isStreakMode) {
             this.streakCount++;
             this.ui.showGameOver(
-                `Congratulations! Continue your streak! Current streak: ${this.streakCount}`,
+                `Congratulations! Continue your streak!`,
                 this.chosenCharacter.name,
                 this.currentSeed,
                 true,

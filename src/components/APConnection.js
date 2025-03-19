@@ -71,7 +71,7 @@ export class APConnection {
                     <input type="text" id="ap-address" placeholder="Server address" value="archipelago.gg">
                 </div>
                 <div class="input-group">
-                    <input type="number" id="ap-port" placeholder="Port" value="38281">
+                    <input type="number" id="ap-port" placeholder="Port">
                 </div>
                 <div class="input-group">
                     <input type="text" id="ap-slot" placeholder="Slot name">
@@ -81,7 +81,7 @@ export class APConnection {
                 </div>
                 <div class="checkbox-group">
                     <label>
-                        <input type="checkbox" id="ap-deathlink" checked>
+                        <input type="checkbox" id="ap-deathlink" unchecked>
                         Enable Death Link
                     </label>
                 </div>
