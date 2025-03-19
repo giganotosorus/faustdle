@@ -50,12 +50,21 @@ export class DiscordManager {
         });
     }
 
+    getElapsedTimeText() {
+        if (!this.startTimestamp) return '';
+        const elapsed = Date.now() - this.startTimestamp;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
     async setDefaultActivity() {
         if (!this.connected || !this.sdk) return;
 
         try {
             await this.sdk.setActivity({
                 details: 'Playing Faustdle',
+                state: 'Waiting to start...',
                 largeImageKey: 'faustdle',
                 largeImageText: 'Faustdle',
                 startTimestamp: this.startTimestamp,
@@ -76,13 +85,14 @@ export class DiscordManager {
         const modeText = this.getModeText(mode);
         const guessText = this.getGuessText(guessCount);
         const emojiGrid = this.generateEmojiGrid();
+        const elapsedTime = this.getElapsedTimeText();
 
         try {
             await this.sdk.setActivity({
-                details: `Playing ${modeText}`,
-                state: guessText,
+                details: `${modeText} - ${guessText}`,
+                state: `Time: ${elapsedTime}`,
                 largeImageKey: 'faustdle',
-                largeImageText: 'Faustdle',
+                largeImageText: emojiGrid || 'No guesses yet',
                 smallImageKey: mode.toLowerCase(),
                 smallImageText: modeText,
                 startTimestamp: this.startTimestamp,
@@ -101,13 +111,15 @@ export class DiscordManager {
 
         this.currentMode = mode;
         const modeText = this.getModeText(mode);
+        const emojiGrid = this.generateEmojiGrid();
+        const elapsedTime = this.getElapsedTimeText();
 
         try {
             await this.sdk.setActivity({
                 details: `${modeText} Streak Mode`,
-                state: `Current Streak: ${streak}`,
+                state: `Streak: ${streak} | Time: ${elapsedTime}`,
                 largeImageKey: 'faustdle',
-                largeImageText: 'Faustdle',
+                largeImageText: emojiGrid || 'Starting new streak...',
                 smallImageKey: 'streak',
                 smallImageText: `${streak} Streak`,
                 startTimestamp: this.startTimestamp,
