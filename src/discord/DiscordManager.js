@@ -2,17 +2,12 @@ export class DiscordManager {
     constructor() {
         this.connected = false;
         this.startTimestamp = null;
-        this.activityInterval = null;
     }
 
     async initialize() {
         try {
-            // Add Discord presence meta tags
+            // Add Discord embed meta tags
             this.addDiscordMetaTags();
-            this.connected = true;
-            this.startTimestamp = Date.now();
-            console.log('Discord presence initialized');
-            this.setDefaultActivity();
         } catch (error) {
             console.warn('Discord presence failed to initialize:', error);
             this.connected = false;
@@ -20,7 +15,6 @@ export class DiscordManager {
     }
 
     addDiscordMetaTags() {
-        // Add Discord embed meta tags
         const metaTags = {
             'og:title': 'Faustdle',
             'og:description': 'One Piece Character Guessing Game',
@@ -41,40 +35,18 @@ export class DiscordManager {
     }
 
     setDefaultActivity() {
-        if (!this.connected) return;
-        document.title = 'Faustdle - Main Menu';
+        // No-op for browser version
     }
 
     updateGameActivity(mode, guessCount) {
-        if (!this.connected) return;
-
-        const modeText = {
-            normal: 'Normal Mode',
-            hard: 'Hard Mode',
-            filler: 'Filler Mode',
-            daily: 'Daily Challenge'
-        }[mode] || 'Playing';
-
-        const status = guessCount ? `Guesses: ${guessCount}` : 'Starting game...';
-        document.title = `Faustdle - ${modeText} - ${status}`;
+        // No-op for browser version
     }
 
     updateStreakActivity(mode, streak) {
-        if (!this.connected) return;
-
-        const modeText = {
-            normal: 'Normal Mode',
-            hard: 'Hard Mode',
-            filler: 'Filler Mode'
-        }[mode] || 'Playing';
-
-        document.title = `Faustdle - Streak Mode ${modeText} - Streak: ${streak}`;
+        // No-op for browser version
     }
 
     disconnect() {
-        if (this.connected) {
-            document.title = 'Faustdle';
-            this.connected = false;
-        }
+        // No-op for browser version
     }
 }
