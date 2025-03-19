@@ -37,7 +37,7 @@ export default class GameApp {
         this.leaderboardManager = new LeaderboardManager(this.supabase);
         this.leaderboardManager.createLeaderboardDialog();
         this.discord = new DiscordManager();
-        this.discord.initialize();
+        this.discord.initialize().catch(console.error);
         
         document.addEventListener('death_link_triggered', (event) => {
             this.handleDeathLink(`Death Link from ${event.detail.source}`);
@@ -379,12 +379,8 @@ export default class GameApp {
         this.results.displayResults(exactName, results);
         this.guessHistory.push({ name: exactName, results });
         
-        // Update Discord presence with new guess count
-        if (this.isStreakMode) {
-            this.discord.updateStreakActivity(this.selectedStreakMode, this.streakCount);
-        } else {
-            this.discord.updateGameActivity(this.gameMode, this.guessHistory.length);
-        }
+        // Update Discord presence with new guess
+        this.discord.addGuess({ name: exactName, results });
         
         const isCorrectGuess = exactName === this.chosenCharacter.name;
         
@@ -569,8 +565,8 @@ export default class GameApp {
         this.guessHistory = [];
         window.gameMode = null;
         
-        // Reset Discord presence to default
-        this.discord.setDefaultActivity();
+        // Clear Discord guess history
+        this.discord.clearGuesses();
         
         if (this.isStreakMode) {
             const currentStreak = this.streakCount;
