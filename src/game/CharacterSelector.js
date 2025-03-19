@@ -1,4 +1,5 @@
 import { names } from '../data/characters.js';
+import { alternateNames } from '../data/alternateNames.js';
 
 export class CharacterSelector {
     selectRandomCharacter(mode, seed) {
@@ -44,8 +45,20 @@ export class CharacterSelector {
 
     findCharacterName(input) {
         const lowerInput = input.toLowerCase();
-        return Object.keys(names).find(name => 
+        
+        // First try direct match
+        const directMatch = Object.keys(names).find(name => 
             name.toLowerCase() === lowerInput
-        ) || null;
+        );
+        if (directMatch) return directMatch;
+
+        // Then check alternate names
+        for (const [originalName, alternates] of Object.entries(alternateNames)) {
+            if (alternates.some(alt => alt.toLowerCase() === lowerInput)) {
+                return originalName;
+            }
+        }
+
+        return null;
     }
 }

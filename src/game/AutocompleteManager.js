@@ -1,4 +1,5 @@
 import { names } from '../data/characters.js';
+import { alternateNames } from '../data/alternateNames.js';
 
 export class AutocompleteManager {
     setupAutocomplete(inputElement) {
@@ -15,11 +16,38 @@ export class AutocompleteManager {
         autocompleteList.innerHTML = '';
         
         if (input.length >= 2) {
-            const matches = Object.keys(names).filter(name => 
+            // Get matches from original names
+            const directMatches = Object.keys(names).filter(name => 
                 name.toLowerCase().startsWith(input)
             );
+
+            // Get matches from alternate names
+            const alternateMatches = new Set();
+            for (const [originalName, alternates] of Object.entries(alternateNames)) {
+                // Add alternates that match the input
+                alternates.forEach(alt => {
+                    if (alt.toLowerCase().startsWith(input)) {
+                        alternateMatches.add(originalName);
+                    }
+                });
+            }
+
+            // Combine and deduplicate matches
+            const allMatches = new Set([...directMatches, ...alternateMatches]);
             
-            matches.forEach(match => this.createSuggestion(match, event.target, autocompleteList));
+            // Create suggestions for all matches
+            allMatches.forEach(match => {
+                this.createSuggestion(match, event.target, autocompleteList);
+                
+                // Add alternate names as additional suggestions
+                if (alternateNames[match]) {
+                    alternateNames[match].forEach(alt => {
+                        if (alt.toLowerCase().startsWith(input)) {
+                            this.createSuggestion(alt, event.target, autocompleteList, match);
+                        }
+                    });
+                }
+            });
         }
     }
 
@@ -29,13 +57,21 @@ export class AutocompleteManager {
         }
     }
 
-    createSuggestion(match, input, list) {
+    createSuggestion(match, input, list, originalName = null) {
         const li = document.createElement('li');
         li.textContent = match;
+        
+        if (originalName) {
+            li.classList.add('alternate-name');
+            li.title = `Alternative name for ${originalName}`;
+        }
+        
         li.addEventListener('click', () => {
-            input.value = match;
+            // If it's an alternate name, use the original name
+            input.value = originalName || match;
             list.innerHTML = '';
         });
+        
         list.appendChild(li);
     }
 }

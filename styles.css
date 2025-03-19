@@ -89,6 +89,17 @@ h1 {
   background-color: #f8fafc;
 }
 
+.autocomplete-list li.alternate-name {
+  font-style: italic;
+  color: #666;
+}
+
+.autocomplete-list li.alternate-name::after {
+  content: " (alt name)";
+  font-size: 0.8em;
+  color: #999;
+}
+
 input {
   flex: 1;
   padding: 0.75rem 1rem;
