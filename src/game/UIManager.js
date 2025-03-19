@@ -81,28 +81,44 @@ export class UIManager {
     }
 
     showGameOver(message, character, seed, isStreak = false, streakCount = 0) {
-        document.getElementById('game-play').classList.add('hidden');
-        document.getElementById('game-over').classList.remove('hidden');
-        document.getElementById('game-over-message').textContent = message;
-        document.getElementById('correct-character').textContent = character;
+        const gamePlay = document.getElementById('game-play');
+        const gameOver = document.getElementById('game-over');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const correctCharacter = document.getElementById('correct-character');
+        const seedContainer = document.getElementById('game-seed-container');
+        const gameSeed = document.getElementById('game-seed');
+        const emojiGrid = document.getElementById('emoji-grid');
+        const resultsTable = document.getElementById('results-final');
+        const gameMode = window.gameMode;
+        
+        if (gamePlay) gamePlay.classList.add('hidden');
+        if (gameOver) gameOver.classList.remove('hidden');
+        if (gameOverMessage) gameOverMessage.textContent = message;
+        if (correctCharacter) correctCharacter.textContent = character;
+        
+        // Always show emoji grid and results table
+        if (emojiGrid) emojiGrid.style.display = 'block';
+        if (resultsTable) resultsTable.style.display = 'block';
         
         this.removeStreakCounter();
         this.removeDailyElements();
         this.removeShareButtons();
         
-        const seedContainer = document.getElementById('game-seed-container');
-        const emojiGrid = document.getElementById('emoji-grid');
+        // Handle seed container visibility
+        if (seedContainer && gameSeed) {
+            if (isStreak || gameMode === 'daily') {
+                seedContainer.classList.add('hidden');
+            } else {
+                seedContainer.classList.remove('hidden');
+                gameSeed.textContent = seed;
+            }
+        }
         
         if (isStreak) {
-            seedContainer.classList.add('hidden');
             this.addStreakCounter(streakCount);
-        } else if (window.gameMode === 'daily') {
-            seedContainer.classList.add('hidden');
+        } else if (gameMode === 'daily') {
             this.addDailyTitle();
             this.addShareButtons();
-        } else {
-            seedContainer.classList.remove('hidden');
-            document.getElementById('game-seed').textContent = seed;
         }
     }
 
@@ -210,7 +226,9 @@ export class UIManager {
         const streakText = document.createElement('div');
         streakText.className = 'streak-count';
         streakText.textContent = `Current Streak: ${count}`;
-        emojiGrid.parentNode.insertBefore(streakText, emojiGrid);
+        if (emojiGrid && emojiGrid.parentNode) {
+            emojiGrid.parentNode.insertBefore(streakText, emojiGrid);
+        }
     }
 }
 

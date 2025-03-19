@@ -419,25 +419,42 @@ export default class GameApp {
         if (!this.chosenCharacter || this.gameMode === 'daily') return;
         
         this.timer.stopTimer();
-        document.getElementById('game-play').classList.add('hidden');
-        document.getElementById('game-over').classList.remove('hidden');
         
-        document.getElementById('game-over-message').textContent = isDeathLink ? 
-            'Game Over - Death Link forced skip!' : 
-            'Game skipped!';
-        document.getElementById('correct-character').textContent = this.chosenCharacter.name;
-        
+        const gamePlayElement = document.getElementById('game-play');
+        const gameOverElement = document.getElementById('game-over');
+        const gameOverMessageElement = document.getElementById('game-over-message');
+        const correctCharacterElement = document.getElementById('correct-character');
         const seedContainer = document.getElementById('game-seed-container');
-        if (this.gameMode === 'daily') {
-            seedContainer.classList.add('hidden');
-        } else {
-            seedContainer.classList.remove('hidden');
-            document.getElementById('game-seed').textContent = this.currentSeed;
+        const gameSeedElement = document.getElementById('game-seed');
+        const emojiGridElement = document.getElementById('emoji-grid');
+        
+        if (gamePlayElement) gamePlayElement.classList.add('hidden');
+        if (gameOverElement) gameOverElement.classList.remove('hidden');
+        
+        if (gameOverMessageElement) {
+            gameOverMessageElement.textContent = isDeathLink ? 
+                'Game Over - Death Link forced skip!' : 
+                'Game skipped!';
+        }
+        
+        if (correctCharacterElement) {
+            correctCharacterElement.textContent = this.chosenCharacter.name;
+        }
+        
+        if (seedContainer && gameSeedElement) {
+            if (this.gameMode === 'daily') {
+                seedContainer.classList.add('hidden');
+            } else {
+                seedContainer.classList.remove('hidden');
+                gameSeedElement.textContent = this.currentSeed;
+            }
         }
 
-        document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
+        if (emojiGridElement) {
+            emojiGridElement.textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
+        }
+        
         this.results.copyResultsTable();
-
         this.ui.removeDailyElements();
 
         if (!isDeathLink && apClient.isConnected() && apClient.isDeathLinkEnabled()) {
