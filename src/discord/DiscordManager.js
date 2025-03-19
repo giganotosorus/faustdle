@@ -2,7 +2,7 @@ export class DiscordManager {
     constructor() {
         this.connected = false;
         this.startTimestamp = null;
-        this.rpc = null;
+        this.sdk = null;
         this.clientId = '1351722811718373447';
         this.guessHistory = [];
         this.currentMode = null;
@@ -13,20 +13,17 @@ export class DiscordManager {
             // Add Discord embed meta tags
             this.addDiscordMetaTags();
 
-            // Initialize Discord RPC
-            const { Client } = await import('discord-rpc');
-            this.rpc = new Client({ transport: 'ipc' });
+            // Initialize Discord Embedded App SDK
+            const { Discord } = await import('@discord/embedded-app-sdk');
+            this.sdk = new Discord({
+                clientId: this.clientId
+            });
 
-            try {
-                await this.rpc.login({ clientId: this.clientId });
-                this.connected = true;
-                this.startTimestamp = Date.now();
-                this.setDefaultActivity();
-                console.log('Discord RPC connected');
-            } catch (error) {
-                console.warn('Discord RPC login failed:', error);
-                this.connected = false;
-            }
+            await this.sdk.ready();
+            this.connected = true;
+            this.startTimestamp = Date.now();
+            this.setDefaultActivity();
+            console.log('Discord Embedded App SDK connected');
         } catch (error) {
             console.warn('Discord presence failed to initialize:', error);
             this.connected = false;
@@ -53,63 +50,75 @@ export class DiscordManager {
         });
     }
 
-    setDefaultActivity() {
-        if (!this.connected) return;
+    async setDefaultActivity() {
+        if (!this.connected || !this.sdk) return;
 
-        this.rpc.setActivity({
-            details: 'Playing Faustdle',
-            largeImageKey: 'faustdle',
-            largeImageText: 'Faustdle',
-            startTimestamp: this.startTimestamp,
-            instance: false,
-            buttons: [
-                { label: 'Play Faustdle', url: 'https://faustdle.com' }
-            ]
-        });
+        try {
+            await this.sdk.setActivity({
+                details: 'Playing Faustdle',
+                largeImageKey: 'faustdle',
+                largeImageText: 'Faustdle',
+                startTimestamp: this.startTimestamp,
+                instance: false,
+                buttons: [
+                    { label: 'Play Faustdle', url: 'https://faustdle.com' }
+                ]
+            });
+        } catch (error) {
+            console.warn('Failed to set default activity:', error);
+        }
     }
 
-    updateGameActivity(mode, guessCount) {
-        if (!this.connected) return;
+    async updateGameActivity(mode, guessCount) {
+        if (!this.connected || !this.sdk) return;
 
         this.currentMode = mode;
         const modeText = this.getModeText(mode);
         const guessText = this.getGuessText(guessCount);
         const emojiGrid = this.generateEmojiGrid();
 
-        this.rpc.setActivity({
-            details: `Playing ${modeText}`,
-            state: guessText,
-            largeImageKey: 'faustdle',
-            largeImageText: 'Faustdle',
-            smallImageKey: mode.toLowerCase(),
-            smallImageText: modeText,
-            startTimestamp: this.startTimestamp,
-            instance: false,
-            buttons: [
-                { label: 'Play Faustdle', url: 'https://faustdle.com' }
-            ]
-        });
+        try {
+            await this.sdk.setActivity({
+                details: `Playing ${modeText}`,
+                state: guessText,
+                largeImageKey: 'faustdle',
+                largeImageText: 'Faustdle',
+                smallImageKey: mode.toLowerCase(),
+                smallImageText: modeText,
+                startTimestamp: this.startTimestamp,
+                instance: false,
+                buttons: [
+                    { label: 'Play Faustdle', url: 'https://faustdle.com' }
+                ]
+            });
+        } catch (error) {
+            console.warn('Failed to update game activity:', error);
+        }
     }
 
-    updateStreakActivity(mode, streak) {
-        if (!this.connected) return;
+    async updateStreakActivity(mode, streak) {
+        if (!this.connected || !this.sdk) return;
 
         this.currentMode = mode;
         const modeText = this.getModeText(mode);
 
-        this.rpc.setActivity({
-            details: `${modeText} Streak Mode`,
-            state: `Current Streak: ${streak}`,
-            largeImageKey: 'faustdle',
-            largeImageText: 'Faustdle',
-            smallImageKey: 'streak',
-            smallImageText: `${streak} Streak`,
-            startTimestamp: this.startTimestamp,
-            instance: false,
-            buttons: [
-                { label: 'Play Faustdle', url: 'https://faustdle.com' }
-            ]
-        });
+        try {
+            await this.sdk.setActivity({
+                details: `${modeText} Streak Mode`,
+                state: `Current Streak: ${streak}`,
+                largeImageKey: 'faustdle',
+                largeImageText: 'Faustdle',
+                smallImageKey: 'streak',
+                smallImageText: `${streak} Streak`,
+                startTimestamp: this.startTimestamp,
+                instance: false,
+                buttons: [
+                    { label: 'Play Faustdle', url: 'https://faustdle.com' }
+                ]
+            });
+        } catch (error) {
+            console.warn('Failed to update streak activity:', error);
+        }
     }
 
     getModeText(mode) {
@@ -141,7 +150,9 @@ export class DiscordManager {
 
     addGuess(guess) {
         this.guessHistory.push(guess);
-        this.updateGameActivity(this.currentMode, this.guessHistory.length);
+        if (this.currentMode) {
+            this.updateGameActivity(this.currentMode, this.guessHistory.length);
+        }
     }
 
     clearGuesses() {
@@ -150,13 +161,13 @@ export class DiscordManager {
     }
 
     disconnect() {
-        if (this.connected && this.rpc) {
-            this.rpc.destroy();
-            this.connected = false;
-            this.rpc = null;
-            this.startTimestamp = null;
-            this.guessHistory = [];
-            this.currentMode = null;
+        if (this.connected && this.sdk) {
+            this.sdk.destroy();
         }
+        this.connected = false;
+        this.sdk = null;
+        this.startTimestamp = null;
+        this.guessHistory = [];
+        this.currentMode = null;
     }
 }
