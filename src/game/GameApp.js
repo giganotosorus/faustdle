@@ -9,6 +9,10 @@ import { UIManager } from './UIManager.js';
 import { ResultsManager } from './ResultsManager.js';
 import { LeaderboardManager } from './LeaderboardManager.js';
 import { DiscordManager } from '../discord/DiscordManager.js';
+import seedrandom from 'seedrandom';
+
+// Make seedrandom available globally
+window.Math.seedrandom = seedrandom;
 
 export default class GameApp {
     constructor() {
