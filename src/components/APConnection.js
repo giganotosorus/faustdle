@@ -53,8 +53,9 @@ export class APConnection {
                 <h3>Other Options</h3>
                 <div class="other-buttons">
                     <button id="faq-button" class="btn btn-faq">FAQ</button>
-                    <button id="generate-seed" class="btn btn-generate">Obtain seed for character</button>
                     <button id="ap-connect-button" class="btn btn-ap">Connect to Archipelago</button>
+                    <button id="generate-seed" class="btn btn-generate">Obtain seed for character</button>
+                    <a href="https://discord.gg/339W2PB4gD" target="_blank" class="btn btn-discord">Join our Discord</a>
                     <button id="other-cancel" class="btn btn-secondary">Back</button>
                 </div>
             </div>

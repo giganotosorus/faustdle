@@ -874,3 +874,13 @@ tr:hover {
 .btn-bluesky:hover {
     background: #0066cc;
 }
+
+.btn-discord {
+    background: #5865F2;
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn-discord:hover {
+    background: #4752C4;
+}
