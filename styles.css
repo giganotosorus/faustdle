@@ -137,6 +137,7 @@ input:focus {
   min-width: fit-content;
   line-height: 1;
   box-sizing: border-box;
+  text-decoration: none;
 }
 
 .btn:hover {
@@ -361,6 +362,36 @@ tr:hover {
 .character-name {
   font-weight: bold;
   color: var(--primary-color);
+}
+
+.legal-content {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2rem;
+  border-radius: 0.5rem;
+  margin-top: 2rem;
+}
+
+.legal-content h2 {
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.legal-text {
+  line-height: 1.6;
+  color: var(--text-color);
+}
+
+.back-button-container {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.legal-links {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
 }
 
 @media (max-width: 768px) {

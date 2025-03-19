@@ -8,6 +8,7 @@ import { TimerManager } from './TimerManager.js';
 import { UIManager } from './UIManager.js';
 import { ResultsManager } from './ResultsManager.js';
 import { LeaderboardManager } from './LeaderboardManager.js';
+import { DiscordManager } from '../discord/DiscordManager.js';
 
 export default class GameApp {
     constructor() {
@@ -30,6 +31,8 @@ export default class GameApp {
         this.results = new ResultsManager();
         this.leaderboardManager = new LeaderboardManager(this.supabase);
         this.leaderboardManager.createLeaderboardDialog();
+        this.discord = new DiscordManager();
+        this.discord.initialize();
         
         document.addEventListener('death_link_triggered', (event) => {
             this.handleDeathLink(`Death Link from ${event.detail.source}`);
@@ -335,6 +338,9 @@ export default class GameApp {
             this.chosenCharacter = this.characterSelector.selectRandomCharacter(mode, this.currentSeed);
             this.timer.startTimer();
             
+            // Update Discord presence
+            this.discord.updateGameActivity(mode, 0);
+            
             if (apClient.isConnected()) {
                 apClient.setGameMode(mode);
             }
@@ -344,6 +350,8 @@ export default class GameApp {
                     const results = compareTraits(names[this.previousWinner], this.chosenCharacter.traits);
                     this.results.displayResults(this.previousWinner, results);
                     this.guessHistory.push({ name: this.previousWinner, results });
+                    // Update Discord presence with guess count
+                    this.discord.updateGameActivity(mode, this.guessHistory.length);
                 }, 100);
             }
         } catch (error) {
@@ -365,6 +373,13 @@ export default class GameApp {
         const results = compareTraits(names[exactName], this.chosenCharacter.traits);
         this.results.displayResults(exactName, results);
         this.guessHistory.push({ name: exactName, results });
+        
+        // Update Discord presence with new guess count
+        if (this.isStreakMode) {
+            this.discord.updateStreakActivity(this.selectedStreakMode, this.streakCount);
+        } else {
+            this.discord.updateGameActivity(this.gameMode, this.guessHistory.length);
+        }
         
         const isCorrectGuess = exactName === this.chosenCharacter.name;
         
@@ -532,11 +547,16 @@ export default class GameApp {
         this.guessHistory = [];
         window.gameMode = null;
         
+        // Reset Discord presence to default
+        this.discord.setDefaultActivity();
+        
         if (this.isStreakMode) {
             const currentStreak = this.streakCount;
             document.getElementById('game-setup').classList.add('hidden');
             this.startGame(this.selectedStreakMode);
             this.streakCount = currentStreak;
+            // Update Discord presence for streak mode
+            this.discord.updateStreakActivity(this.selectedStreakMode, this.streakCount);
         } else {
             this.chosenCharacter = null;
             this.currentSeed = null;
