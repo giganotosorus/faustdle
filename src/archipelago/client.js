@@ -29,6 +29,7 @@ class FaustdleAPClient extends EventEmitter {
         this.sentHints = new Set();
         this.deathLinkEnabled = false;
         this.isDiscordActivity = window.location.href.includes('discordsays.com');
+        this.proxyUrl = '1351722811718373447.discordsays.com/.proxy';
     }
 
     /**
@@ -38,6 +39,26 @@ class FaustdleAPClient extends EventEmitter {
     log(...args) {
         if (this.debug) {
             console.log('[AP Client]', ...args);
+        }
+    }
+
+    /**
+     * Constructs the WebSocket URL based on the environment
+     * @param {string} hostname - Server hostname
+     * @param {number} port - Server port
+     * @returns {string} WebSocket URL
+     */
+    constructWebSocketUrl(hostname, port) {
+        // Remove any protocol prefix and trailing slashes
+        const cleanHostname = hostname.replace(/^(ws|wss|http|https):\/\//, '').replace(/\/$/, '');
+        
+        if (this.isDiscordActivity) {
+            // For Discord activities, use the proxy service
+            return `wss://${this.proxyUrl}/${cleanHostname}:${port}`;
+        } else {
+            // For regular web usage
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            return `${protocol}//${cleanHostname}:${port}`;
         }
     }
 
@@ -70,23 +91,16 @@ class FaustdleAPClient extends EventEmitter {
             this.hostName = hostname;
             this.deathLinkEnabled = deathLink;
 
-            let wsUrl;
-            if (this.isDiscordActivity) {
-                // Remove any protocol prefix from hostname
-                const cleanHostname = hostname.replace(/^(ws|wss|http|https):\/\//, '');
-                // Use Discord's proxy service when running as a Discord activity
-                wsUrl = `wss://1351722811718373447.discordsays.com/.proxy/${cleanHostname}:${effectivePort}`;
-            } else {
-                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                wsUrl = hostname.startsWith('ws://') || hostname.startsWith('wss://') 
-                    ? hostname 
-                    : `${protocol}//${hostname}:${effectivePort}`;
-            }
-            
+            const wsUrl = this.constructWebSocketUrl(hostname, effectivePort);
             this.log('Connecting to:', wsUrl);
             
             return new Promise((resolve) => {
                 try {
+                    if (this.socket) {
+                        this.socket.close();
+                        this.socket = null;
+                    }
+
                     this.socket = new WebSocket(wsUrl);
                     
                     this.socket.onopen = () => {
