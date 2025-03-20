@@ -53,8 +53,8 @@ class FaustdleAPClient extends EventEmitter {
         const cleanHostname = hostname.replace(/^(ws|wss|http|https):\/\//, '').replace(/\/$/, '');
         
         if (this.isDiscordActivity) {
-            // For Discord activities, use the full Discord proxy URL
-            return `wss://${this.discordAppId}.discordsays.com/.proxy/${cleanHostname}:${port}`;
+            // For Discord activities, use the full Discord proxy URL with /proxy prefix
+            return `wss://${this.discordAppId}.discordsays.com/proxy:${port}`;
         } else {
             // For regular web usage
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
