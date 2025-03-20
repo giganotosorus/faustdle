@@ -72,9 +72,10 @@ class FaustdleAPClient extends EventEmitter {
 
             let wsUrl;
             if (this.isDiscordActivity) {
+                // Remove any protocol prefix from hostname
+                const cleanHostname = hostname.replace(/^(ws|wss|http|https):\/\//, '');
                 // Use Discord's proxy service when running as a Discord activity
-                const clientId = '1351722811718373447';
-                wsUrl = `wss://${clientId}.discordsays.com/.proxy/archipelago.gg:${effectivePort}`;
+                wsUrl = `wss://1351722811718373447.discordsays.com/.proxy/${cleanHostname}:${effectivePort}`;
             } else {
                 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                 wsUrl = hostname.startsWith('ws://') || hostname.startsWith('wss://') 
@@ -426,27 +427,6 @@ class FaustdleAPClient extends EventEmitter {
         
         this.log('Selected location:', selectedLocation, 'with flags:', this.locationFlags.get(selectedLocation));
         return selectedLocation;
-    }
-
-    /**
-     * Sends a test hint to verify hint system functionality
-     */
-    sendTestHint() {
-        if (!this.connected) {
-            this.log('Cannot send test hint: not connected');
-            return;
-        }
-
-        const locationId = this.getRandomMissingLocation();
-        if (locationId !== null) {
-            this.log('Sending test hint for location:', locationId);
-            this.sentHints.add(locationId);
-            this.sendRaw({
-                cmd: 'LocationScouts',
-                locations: [locationId],
-                create_as_hint: true
-            });
-        }
     }
 
     /**
