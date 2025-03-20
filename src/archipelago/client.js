@@ -29,7 +29,7 @@ class FaustdleAPClient extends EventEmitter {
         this.sentHints = new Set();
         this.deathLinkEnabled = false;
         this.isDiscordActivity = window.location.href.includes('discordsays.com');
-        this.proxyUrl = '/proxy';
+        this.discordAppId = '1351722811718373447';
     }
 
     /**
@@ -53,8 +53,8 @@ class FaustdleAPClient extends EventEmitter {
         const cleanHostname = hostname.replace(/^(ws|wss|http|https):\/\//, '').replace(/\/$/, '');
         
         if (this.isDiscordActivity) {
-            // For Discord activities, use the proxy prefix
-            return `wss://${cleanHostname}:${port}${this.proxyUrl}`;
+            // For Discord activities, use the full Discord proxy URL
+            return `wss://${this.discordAppId}.discordsays.com/.proxy/${cleanHostname}:${port}`;
         } else {
             // For regular web usage
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
