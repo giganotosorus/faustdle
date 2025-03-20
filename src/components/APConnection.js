@@ -37,12 +37,6 @@ export class APConnection {
         connectButton.onclick = () => this.toggleConnectionDialog();
 
         // Create test hint button (hidden by default)
-        const testHintButton = document.createElement('button');
-        testHintButton.id = 'ap-test-hint';
-        testHintButton.className = 'btn btn-ap';
-        testHintButton.textContent = 'Send Test Hint';
-        testHintButton.onclick = () => apClient.sendTestHint();
-        testHintButton.style.display = 'none';
         
         // Create Other dialog
         const otherDialog = document.createElement('div');
@@ -112,7 +106,6 @@ export class APConnection {
                 seedGenerator.appendChild(buttonGroup);
             }
             buttonGroup.appendChild(otherButton);
-            buttonGroup.appendChild(testHintButton);
         }
 
         this.container.appendChild(dialog);
@@ -176,12 +169,8 @@ export class APConnection {
         apClient.on('connected', () => {
             this.showStatus('Connected successfully!', 'success');
             const otherButton = document.getElementById('other-toggle');
-            const testHintButton = document.getElementById('ap-test-hint');
             if (otherButton) {
                 otherButton.style.display = 'none';
-            }
-            if (testHintButton) {
-                testHintButton.style.display = 'block';
             }
             setTimeout(() => {
                 this.toggleConnectionDialog();
@@ -204,13 +193,9 @@ export class APConnection {
 
         apClient.on('disconnected', () => {
             const otherButton = document.getElementById('other-toggle');
-            const testHintButton = document.getElementById('ap-test-hint');
             const hintsContainer = document.getElementById('ap-hints-container');
             if (otherButton) {
                 otherButton.style.display = 'block';
-            }
-            if (testHintButton) {
-                testHintButton.style.display = 'none';
             }
             if (hintsContainer) {
                 hintsContainer.style.display = 'none';

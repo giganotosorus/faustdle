@@ -28,6 +28,7 @@ class FaustdleAPClient extends EventEmitter {
         this.locationFlags = new Map();
         this.sentHints = new Set();
         this.deathLinkEnabled = false;
+        this.isDiscordActivity = window.location.href.includes('discordsays.com');
     }
 
     /**
@@ -69,10 +70,17 @@ class FaustdleAPClient extends EventEmitter {
             this.hostName = hostname;
             this.deathLinkEnabled = deathLink;
 
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = hostname.startsWith('ws://') || hostname.startsWith('wss://') 
-                ? hostname 
-                : `${protocol}//${hostname}:${effectivePort}`;
+            let wsUrl;
+            if (this.isDiscordActivity) {
+                // Use Discord's proxy service when running as a Discord activity
+                const clientId = '1351722811718373447';
+                wsUrl = `wss://${clientId}.discordsays.com/.proxy/archipelago.gg:${effectivePort}`;
+            } else {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                wsUrl = hostname.startsWith('ws://') || hostname.startsWith('wss://') 
+                    ? hostname 
+                    : `${protocol}//${hostname}:${effectivePort}`;
+            }
             
             this.log('Connecting to:', wsUrl);
             
