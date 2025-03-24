@@ -31,6 +31,18 @@ export class TimerManager {
     }
 
     /**
+     * Gets the elapsed time as a formatted string
+     * @returns {string} Formatted time string
+     */
+    getElapsedTime() {
+        if (!this.startTime) return '0:00';
+        const elapsed = Date.now() - this.startTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    /**
      * Stops the timer and displays final time.
      */
     stopTimer() {

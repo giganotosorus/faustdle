@@ -22,7 +22,6 @@ export class ResultsManager {
         results.forEach(result => {
             const cell = document.createElement('td');
             cell.textContent = result.text;
-            
             // Apply appropriate styling based on match result
             if (result.match) {
                 cell.classList.add('match');

@@ -373,6 +373,13 @@ tr:hover {
 .character-name {
   font-weight: bold;
   color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.character-name:hover {
+  color: #980631;
+  text-decoration: underline;
 }
 
 .legal-content {

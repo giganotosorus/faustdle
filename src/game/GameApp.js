@@ -90,7 +90,8 @@ export default class GameApp {
                 date: today,
                 completed: data.completed,
                 character: data.character,
-                guessHistory: data.guessHistory
+                guessHistory: data.guessHistory,
+                completionTime: data.completionTime
             };
             localStorage.setItem('dailyChallenge', JSON.stringify(cacheData));
         } catch (error) {
@@ -476,6 +477,7 @@ export default class GameApp {
         if (this.gameMode === 'daily') {
             const today = new Date().toISOString().split('T')[0];
             const dailyNumber = this.ui.getDailyChallengeNumber();
+            const completionTime = this.timer.getElapsedTime();
             
             try {
                 await this.supabase.rpc('increment_daily_players', {
@@ -494,7 +496,11 @@ export default class GameApp {
 
                 this.ui.showGameOver(
                     `Congratulations! You completed Daily Challenge #${dailyNumber}!`,
-                    this.chosenCharacter.name
+                    this.chosenCharacter.name,
+                    null,
+                    false,
+                    0,
+                    completionTime
                 );
 
                 if (this.currentDailyCount) {
@@ -504,13 +510,18 @@ export default class GameApp {
                 this.saveDailyChallengeCache({
                     completed: true,
                     character: this.chosenCharacter.name,
-                    guessHistory: this.guessHistory
+                    guessHistory: this.guessHistory,
+                    completionTime: completionTime
                 });
             } catch (error) {
                 console.error('Error updating daily player count:', error);
                 this.ui.showGameOver(
                     `Congratulations! You completed Daily Challenge #${dailyNumber}!`,
-                    this.chosenCharacter.name
+                    this.chosenCharacter.name,
+                    null,
+                    false,
+                    0,
+                    completionTime
                 );
             }
         } else if (this.isStreakMode) {
@@ -674,7 +685,11 @@ export default class GameApp {
             
             this.ui.showGameOver(
                 `You've already completed today's challenge!`,
-                cache.character
+                cache.character,
+                null,
+                false,
+                0,
+                cache.completionTime
             );
             
             this.guessHistory = cache.guessHistory;

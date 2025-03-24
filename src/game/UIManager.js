@@ -1,3 +1,5 @@
+import { names } from '../data/characters.js';
+
 /**
  * Manages all UI-related functionality and updates.
  * Handles display updates, animations, and UI state management.
@@ -9,6 +11,7 @@ export class UIManager {
      */
     constructor(supabase) {
         this.supabase = supabase;
+        this.currentCharacter = null;
     }
 
     toggleStreakModeUI(enabled) {
@@ -80,7 +83,7 @@ export class UIManager {
         }
     }
 
-    showGameOver(message, character, seed, isStreak = false, streakCount = 0) {
+    showGameOver(message, character, seed, isStreak = false, streakCount = 0, completionTime = null) {
         const gamePlay = document.getElementById('game-play');
         const gameOver = document.getElementById('game-over');
         const gameOverMessage = document.getElementById('game-over-message');
@@ -88,13 +91,40 @@ export class UIManager {
         const seedContainer = document.getElementById('game-seed-container');
         const gameSeed = document.getElementById('game-seed');
         const emojiGrid = document.getElementById('emoji-grid');
-        const resultsTable = document.getElementById('results-final');
+        const resultsTable = document.getElementById('results-table-final');
+        const finalTime = document.getElementById('final-time');
         const gameMode = window.gameMode;
+        
+        this.currentCharacter = character;
         
         if (gamePlay) gamePlay.classList.add('hidden');
         if (gameOver) gameOver.classList.remove('hidden');
         if (gameOverMessage) gameOverMessage.textContent = message;
-        if (correctCharacter) correctCharacter.textContent = character;
+        
+        // Create wiki link for character name
+        if (correctCharacter) {
+            const characterData = names[character];
+            if (characterData && characterData[11]) { // Check if wiki URL exists
+                const link = document.createElement('a');
+                link.href = characterData[11];
+                link.textContent = character;
+                link.target = '_blank';
+                link.className = 'character-name';
+                correctCharacter.innerHTML = ''; // Clear existing content
+                correctCharacter.appendChild(link);
+            } else {
+                const span = document.createElement('span');
+                span.textContent = character;
+                span.className = 'character-name';
+                correctCharacter.innerHTML = '';
+                correctCharacter.appendChild(span);
+            }
+        }
+
+        // Set completion time if provided
+        if (finalTime && completionTime) {
+            finalTime.textContent = completionTime;
+        }
         
         // Always show emoji grid and results table
         if (emojiGrid) emojiGrid.style.display = 'block';
@@ -116,9 +146,12 @@ export class UIManager {
         
         if (isStreak) {
             this.addStreakCounter(streakCount);
+            this.addCopyButton('streak');
         } else if (gameMode === 'daily') {
             this.addDailyTitle();
             this.addShareButtons();
+        } else {
+            this.addCopyButton('normal');
         }
     }
 
@@ -132,7 +165,7 @@ export class UIManager {
         const copyButton = document.createElement('button');
         copyButton.className = 'btn btn-share';
         copyButton.textContent = 'Copy Results';
-        copyButton.onclick = () => this.copyResults();
+        copyButton.onclick = () => this.copyResults('daily');
         
         // Twitter share button
         const twitterButton = document.createElement('button');
@@ -154,6 +187,21 @@ export class UIManager {
         resultsTable.parentNode.insertBefore(shareContainer, resultsTable);
     }
 
+    addCopyButton(mode) {
+        const shareContainer = document.createElement('div');
+        shareContainer.className = 'share-buttons';
+        
+        const copyButton = document.createElement('button');
+        copyButton.className = 'btn btn-share';
+        copyButton.textContent = 'Copy Results';
+        copyButton.onclick = () => this.copyResults(mode);
+        
+        shareContainer.appendChild(copyButton);
+        
+        const resultsTable = document.getElementById('results-table-final');
+        resultsTable.parentNode.insertBefore(shareContainer, resultsTable);
+    }
+
     removeShareButtons() {
         const existingShareButtons = document.querySelector('.share-buttons');
         if (existingShareButtons) {
@@ -161,10 +209,22 @@ export class UIManager {
         }
     }
 
-    copyResults() {
-        const dailyTitle = `Faustdle Day #${this.getDailyChallengeNumber()}`;
+    copyResults(mode) {
         const emojiGrid = document.getElementById('emoji-grid').textContent;
-        const text = `${dailyTitle}\n\n${emojiGrid}\n\nhttps://faustdle.com`;
+        const finalTime = document.getElementById('final-time').textContent;
+        let text = '';
+
+        switch(mode) {
+            case 'daily':
+                text = `Faustdle Day #${this.getDailyChallengeNumber()}\nTime: ${finalTime}\n\n${emojiGrid}\n\nhttps://faustdle.com`;
+                break;
+            case 'streak':
+                const streakCount = document.querySelector('.streak-count')?.textContent.match(/\d+/)[0] || '0';
+                text = `Found ${this.currentCharacter}\nStreak: ${streakCount}\nTime: ${finalTime}\n\n${emojiGrid}\n\nhttps://faustdle.com`;
+                break;
+            default:
+                text = `Found ${this.currentCharacter}\nTime: ${finalTime}\n\n${emojiGrid}\n\nhttps://faustdle.com`;
+        }
         
         navigator.clipboard.writeText(text).then(() => {
             alert('Results copied to clipboard!');
