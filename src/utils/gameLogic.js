@@ -46,6 +46,34 @@ export function compareTraits(guessTraits, chosenTraits) {
       }
       continue;
     }
+
+    // Special handling for height (index 5)
+    if (i === 5) {
+      const guessHeight = parseInt(guessTraits[i]);
+      const chosenHeight = parseInt(chosenTraits[i]);
+
+      if (guessHeight === -1 || chosenHeight === -1) {
+        // If either height is unknown
+        results.push({
+          match: guessHeight === chosenHeight,
+          text: guessHeight === -1 ? "Unknown Height" : guessHeight.toString()
+        });
+      } else if (guessHeight === chosenHeight) {
+        // Heights match exactly
+        results.push({
+          match: true,
+          text: guessHeight.toString()
+        });
+      } else {
+        // Different heights - show direction (higher/lower)
+        results.push({
+          match: false,
+          direction: compareNumbers(guessHeight, chosenHeight),
+          text: guessHeight.toString()
+        });
+      }
+      continue;
+    }
     
     // Compare other traits
     if (guessTraits[i] === chosenTraits[i]) {
