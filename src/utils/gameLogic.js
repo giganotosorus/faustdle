@@ -24,6 +24,7 @@ export function compareTraits(guessTraits, chosenTraits) {
   for (let i = 0; i < guessTraits.length; i++) {
     // Skip difficulty trait (last trait)
     if (i === 9) continue;
+    if (i === 11) continue;
     
     // Special handling for bounty comparison (index 4)
     if (i === 4) {
