@@ -1,0 +1,7 @@
+import { default as GameApp } from './src/game/GameApp.js';
+
+// Initialize the game when the DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded and parsed');
+    new GameApp();
+});

@@ -17,6 +17,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
+        faustdle: 'faustdle.html',
         tos: 'tos.html',
         privacy: 'privacy.html'
       }
