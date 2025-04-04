@@ -3,55 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bleachdle</title>
+    <title>Faustdle</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="bleachdle.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>Welcome to Faustdle!</h1>
-        </div>
+        <h1><img src="Faustdle-3-4-2025.png" alt="Faustdle"></h1>
         
-        <div id="bleach-game" class="game-section">
+        <div id="game-setup" class="game-section">
+            <h2>Choose a game mode:</h2>
+            <div class="mode-buttons">
+                <div class="main-modes">
+                    <button id="normal-mode" class="btn">Normal Mode</button>
+                    <button id="hard-mode" class="btn btn-hard">Hard Mode</button>
+                    <button id="filler-mode" class="btn btn-filler">Filler Mode</button>
+                </div>
+                <button id="daily-mode" class="btn btn-daily">Daily Character</button>
+                <div id="daily-countdown" class="countdown">
+                    Next daily character in: <span id="countdown-timer"></span>
+                </div>
+            </div>
+            <div id="seed-section">
+                <h2>Or enter a predetermined seed:</h2>
+                <div class="input-group">
+                    <input type="text" id="seed-input" placeholder="Enter seed (optional)">
+                    <button id="seed-start" class="btn">Start with Seed</button>
+                </div>
+                <div class="seed-generator">
+                    <div class="button-group">
+                        <button id="streak-mode" class="btn btn-streak">Streak Mode</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="archipelago-setup" class="game-section hidden">
+            <h2>Archipelago Connection</h2>
+            <div class="ap-form">
+                <div class="input-group">
+                    <input type="text" id="ap-address" placeholder="Server address" value="archipelago.gg">
+                    <input type="text" id="ap-name" placeholder="Player name">
+                    <input type="password" id="ap-password" placeholder="Password (optional)">
+                </div>
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="ap-deathlink">
+                        Enable Death Link
+                    </label>
+                </div>
+                <div class="button-group">
+                    <button id="ap-connect" class="btn btn-ap">Connect</button>
+                    <button id="ap-back" class="btn btn-secondary">Back</button>
+                </div>
+                <div id="ap-status" class="hidden">
+                    <p class="status-message"></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="seed-generator" class="game-section hidden">
+            <h2>Generate Seed for Character</h2>
             <div class="input-group">
                 <div class="autocomplete-wrapper">
-                    <input type="text" id="bleach-guess-input" placeholder="Enter bleach brand...">
+                    <input type="text" id="character-input" placeholder="Enter character name...">
                 </div>
-                <button id="bleach-guess-button" class="btn">Guess</button>
+                <button id="generate-seed-for-character" class="btn">Generate Seed</button>
+            </div>
+            <div id="generated-seed" class="generated-seed hidden">
+                <p>Generated seed: <span id="seed-result" class="seed"></span></p>
+                <button id="use-generated-seed" class="btn">Use this seed</button>
+                <button id="back-to-main" class="btn btn-secondary">Back to main menu</button>
+            </div>
+        </div>
+ 
+        <div id="game-play" class="game-section hidden">
+            <div class="timer-display">Time: <span id="elapsed-timer">0:00</span></div>
+            <div class="input-group">
+                <div class="autocomplete-wrapper">
+                    <input type="text" id="guess-input" placeholder="Enter character name...">
+                </div>
+                <button id="guess-button" class="btn">Guess</button>
+                <button id="skip-button" class="btn btn-skip">Give Up</button>
             </div>
             
-            <div id="bleach-results" class="results">
-                <table id="bleach-results-table">
+            <div id="results" class="results">
+                <table id="results-table">
                     <thead>
                         <tr>
-                            <th>Brand</th>
-                            <th>pH Level</th>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Affiliation</th>
+                            <th>Devil Fruit</th>
+                            <th>Haki</th>
+                            <th>Bounty</th>
+                            <th>Height</th>
+                            <th>Origin</th>
+                            <th>Arc</th>
+                            <th>Status</th>
+                            <th>Occupation</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </div>
-    </div>
+ 
+        <div id="game-over" class="game-section hidden">
+            <h2>Game Over!</h2>
+            <p id="game-over-message">You found the correct character!</p>
+            <p>The character was: <span id="correct-character" class="character-name"></span></p>
+            <p>Time taken: <span id="final-time" class="time"></span></p>
+            <div id="daily-result-countdown" class="countdown hidden">
+                Next daily character in: <span id="result-countdown-timer"></span>
+            </div>
+            <div id="emoji-grid" class="emoji-grid"></div>
+            <div id="results-final" class="results">
+                <table id="results-table-final">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Affiliation</th>
+                            <th>Devil Fruit</th>
+                            <th>Haki</th>
+                            <th>Bounty</th>
+                            <th>Height</th>
+                            <th>Origin</th>
+                            <th>Arc</th>
+                            <th>Status</th>
+                            <th>Occupation</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button id="play-again" class="btn">Play Again</button>
+        </div>
 
-    <!-- Floating menu button -->
-    <button id="floating-menu-button" class="floating-button">
-        <span class="menu-icon">Other Options</span>
-    </button>
+        <div id="other-dialog" class="other-dialog hidden">
+            <div class="other-dialog-content">
+                <h3>Other Options</h3>
+                <div class="other-buttons">
+                    <button id="generate-seed" class="btn btn-generate">Obtain seed for character</button>
+                    <button id="faq-button" class="btn btn-faq">FAQ</button>
+                    <button id="ap-connect-button" class="btn btn-ap">Connect to Archipelago</button>
+                    <a href="https://discord.gg/339W2PB4gD" target="_blank" class="btn btn-discord">Join our Discord</a>
+                    <button id="other-cancel" class="btn btn-secondary">Back</button>
+                </div>
+            </div>
+        </div>
 
-    <!-- Menu dialog -->
-    <div id="menu-dialog" class="menu-dialog hidden">
-        <div class="menu-content">
-            <h3>Menu</h3>
-            <div class="menu-buttons">
-                <a href="/faustdle.html" class="btn btn-restore">Play Some Other Game IG idk...</a>
-                <button id="close-menu" class="btn btn-secondary">Close</button>
+        <div id="faq-dialog" class="faq-dialog hidden">
+            <div class="faq-dialog-content">
+                <h3>FAQ</h3>
+                <div class="faq-text">
+                    <p>Character data by Slushbucket (@siushbucket on twitter), website by Xtra3678 (@xtra.bmtwitter.com on bluesky)</p>
+                    <p class="warning">WEBSITE CONTAINS UP TO DATE MANGA SPOILERS, MOST IMPORTANTLY WHICH CHARACTERS ARE ALIVE AND DEAD!!!!!!!!!!!</p>
+                    <h4>DIFFERENT MODES INFO:</h4>
+                    <p>Hard and Filler mode include characters from previous modes, you can still get Luffy in hard and you can get Luffy or Faust (hard) in filler.</p>
+                    <p>Normal/Hard is generally based on vibes, Normal includes semi relevant characters who you might remember, Hard includes characters who appear in one or two chapters or SBS exclusive characters, have no speaking lines, etc.</p>
+                    <p>Filler characters include characters from movies, anime filler arcs, and TV specials. Characters from video games, novels, or live shows are not on the list.</p>
+                    <p>Every character, except Zoro, uses their official VIZ Media english name if one is available, with their family name being removed in most cases (Katakuri instead of Charlotte Katakuri). Exceptions include characters like Sanjuan Wolf, whose name is unrecognizable without the surname, and Justy Tinbread, whose name would be way less funny if we removed it.</p>
+                    <h4>CHARACTER INFO:</h4>
+                    <p><b>Devil Fruit: </b>Characters created by devil fruits, like Homies or Satellites, have that devil fruit. So Shaka counts as a Paramecia user.</p>
+                    <p><b>Bounty: </b>Cross Guild bounties count!!! Learn them! Additionally, for characters who have a bounty but we don't know the value, like Kuzan, it's treated as 1. This way, it'll be above 0, but below everything else.</p>
+                    <p><b>Origin: </b>Origin is where a character was born. Bepo grew up in the North Blue, but he was born on Zou in the Grand Line. All Fishmen have the Fishman Island origin, and all Minks and Tontattas have Grand Line. Artificial lifeforms like Seraphim and Satellites use the location where they were created.</p>
+                    <p><b>Arc: </b>The first arc of a character should be self explanatory, but remember that silhouettes count! Linlin and Napoleon first appear in Fishman Island, for example. Filler characters are a little more complicated. They generally line up with the most recent canon anime arc, but there's a few exceptions. For example, Skypiea was the newest arc when Baron Omatsuri and the Secret Island was released, but the movie's plot is incredibly similar to Long Ring Long Land, so that's what we decided the movie would count towards.</p>
+                    <h4>OTHER:</h4>
+                    <p><b>Streak Mode:</b> Build a streak on any of the 3 difficulties! You get 6 guesses on Normal and 8 on Hard and Filler. You can submit your final streak to the leaderboard. It's ok to use search engines, especially on Hard and Filler, but remember that your value as a person is tied to how good you are at knowing One Piece characters, so do so at your own peril!</p>
+                    <p><b>Archipelago: </b>The "Connect to Archipelago" button allows you to connect to Archipelago. Archipelago is a multiworld video game randomizer, where items from one game can be present in another. Faustdle lets you get hints about where items are located, so you can spend 15 minutes trying to guess DJ Gappa just to find out the Hookshot is in a chest that you need the Hookshot to get to. Awesome!</p>
+                    <div class="legal-links">
+                        <a href="/tos.html" class="btn">Terms of Service</a>
+                        <a href="/privacy.html" class="btn">Privacy Policy</a>
+                    </div>
+                </div>
+                <button id="faq-back" class="btn btn-secondary">Back</button>
             </div>
         </div>
     </div>
-
     <script type="module" src="/index.js"></script>
 </body>
 </html>

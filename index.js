@@ -1,7 +1,7 @@
-import { BleachGame } from './src/game/BleachGame.js';
+import { default as GameApp } from './src/game/GameApp.js';
 
-// Initialize the Bleachdle game when the DOM is loaded
+// Initialize the game when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Bleachdle initialized');
-    new BleachGame();
+    console.log('DOM fully loaded and parsed');
+    const game = new GameApp();
 });
