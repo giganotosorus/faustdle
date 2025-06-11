@@ -792,7 +792,7 @@ export const names = {
 "Joseph": ["M","Cipher Pol","None","0","0","-1","Unknown","27","Alive","H","Agent/Officer","https://onepiece.fandom.com/wiki/Joseph"],
 "Gismonda": ["M","Cipher Pol","None","0","0","-1","Unknown","27","Alive","H","Agent/Officer","https://onepiece.fandom.com/wiki/Gismonda"],
 "Maha": ["M","Cipher Pol","None","0","0","-1","Unknown","31","Alive","H","Agent/Officer","https://onepiece.fandom.com/wiki/Maha"],
-"Cobra": ["M","Alabasta","None","0","0","-1","Unknown","11","Alive","U","Royalty","https://onepiece.fandom.com/wiki/Cobra"],
+"Cobra": ["M","Alabasta","None","0","0","-1","Unknown","11","Alive","E","Royalty","https://onepiece.fandom.com/wiki/Cobra"],
 }
 
 export const arcs = [
