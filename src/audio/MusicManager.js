@@ -52,12 +52,22 @@ export class MusicManager {
             '/src/audio/audio files/ONE PIECE WORLD SEEKER - Decisive Battle.mp3',
             '/src/audio/audio files/One Piece Dragon Dream Map theme extended.mp3'
         ];
+        
+        // Easter egg tracks mapping
+        this.easterEggTracks = {
+            'slushbucket': '/src/audio/easter egg audio/slushbucket.mp3',
+            'xtra3678': '/src/audio/easter egg audio/xtra3678.mp3',
+            'boomdacow': '/src/audio/easter egg audio/boomdacow.mp3'
+        };
+        
         this.shuffledPlaylist = [];
         this.playlistIndex = 0;
         this.isEnabled = this.getStoredPreference();
         this.isLooping = true;
-        this.isMinimized = this.getMinimizedPreference();
         this.isShuffled = true; // Always use shuffle mode
+        this.isEasterEggMode = false; // Track if we're in easter egg mode
+        this.currentEasterEggTrack = null; // Current easter egg track
+        this.isMinimized = this.getMinimizedPreference();
         
         // Initialize shuffled playlist
         this.createShuffledPlaylist();
@@ -84,6 +94,9 @@ export class MusicManager {
      * Gets the current track index from the shuffled playlist
      */
     getCurrentTrackIndex() {
+        if (this.isEasterEggMode) {
+            return -1; // Special value for easter egg mode
+        }
         return this.shuffledPlaylist[this.playlistIndex];
     }
 
@@ -91,10 +104,109 @@ export class MusicManager {
      * Gets the current track filename for display
      */
     getCurrentTrackName() {
+        if (this.isEasterEggMode && this.currentEasterEggTrack) {
+            return `🎵 ${this.currentEasterEggTrack}`;
+        }
+        
         const trackIndex = this.getCurrentTrackIndex();
         const fullPath = this.audioFiles[trackIndex];
         const filename = fullPath.split('/').pop().replace('.mp3', '');
         return filename;
+    }
+
+    /**
+     * Checks if a seed is an easter egg track name
+     * @param {string} seed - The seed to check
+     * @returns {boolean} True if it's an easter egg track
+     */
+    isEasterEggSeed(seed) {
+        return this.easterEggTracks.hasOwnProperty(seed.toLowerCase());
+    }
+
+    /**
+     * Activates easter egg mode with a specific track
+     * @param {string} trackName - Name of the easter egg track
+     */
+    activateEasterEggMode(trackName) {
+        const lowerTrackName = trackName.toLowerCase();
+        if (!this.easterEggTracks[lowerTrackName]) {
+            console.warn('Easter egg track not found:', trackName);
+            return false;
+        }
+
+        this.isEasterEggMode = true;
+        this.currentEasterEggTrack = trackName;
+        
+        // Stop current music and start easter egg track
+        this.stopMusic();
+        this.playEasterEggTrack();
+        
+        // Update UI to reflect easter egg mode
+        this.updateEasterEggUI();
+        
+        console.log('Activated easter egg mode with track:', trackName);
+        return true;
+    }
+
+    /**
+     * Deactivates easter egg mode and returns to normal playlist
+     */
+    deactivateEasterEggMode() {
+        this.isEasterEggMode = false;
+        this.currentEasterEggTrack = null;
+        
+        // Stop current music
+        this.stopMusic();
+        
+        // Recreate normal UI
+        this.createMusicControls();
+        
+        console.log('Deactivated easter egg mode');
+    }
+
+    /**
+     * Plays the current easter egg track
+     */
+    async playEasterEggTrack() {
+        if (!this.isEasterEggMode || !this.currentEasterEggTrack) return;
+
+        try {
+            this.createAudioElement();
+            const trackPath = this.easterEggTracks[this.currentEasterEggTrack.toLowerCase()];
+            this.currentAudio.src = trackPath;
+            this.currentAudio.loop = true; // Loop the easter egg track
+            
+            this.updateTrackInfo('Loading easter egg...');
+            
+            await this.currentAudio.play();
+            this.isPlaying = true;
+            
+            // Update play/pause button
+            const playPauseButton = document.getElementById('play-pause');
+            if (playPauseButton) {
+                playPauseButton.innerHTML = '⏸️';
+            }
+            
+        } catch (error) {
+            console.error('Failed to play easter egg track:', error);
+            this.updateTrackInfo('Failed to load easter egg');
+        }
+    }
+
+    /**
+     * Updates the UI for easter egg mode
+     */
+    updateEasterEggUI() {
+        // Recreate controls with easter egg styling
+        this.createMusicControls();
+        
+        // Add special styling to indicate easter egg mode
+        const controls = document.getElementById('music-controls');
+        if (controls && !this.isMinimized) {
+            controls.style.background = 'linear-gradient(135deg, rgba(255, 215, 0, 0.9) 0%, rgba(255, 193, 7, 0.95) 100%)';
+            controls.style.border = '2px solid gold';
+            controls.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.5)';
+        }
     }
 
     /**
@@ -164,7 +276,7 @@ export class MusicManager {
             const expandButton = document.createElement('button');
             expandButton.id = 'music-minimize';
             expandButton.className = 'btn btn-music-minimize';
-            expandButton.innerHTML = '🎵';
+            expandButton.innerHTML = this.isEasterEggMode ? '🎵' : '🎵';
             expandButton.title = 'Expand music player';
             expandButton.onclick = () => this.toggleMinimize();
             
@@ -184,12 +296,13 @@ export class MusicManager {
             minimizeButton.title = 'Minimize music player';
             minimizeButton.onclick = () => this.toggleMinimize();
             
-            // Previous track button
+            // Previous track button (disabled in easter egg mode)
             const prevButton = document.createElement('button');
             prevButton.id = 'prev-track';
             prevButton.className = 'btn btn-music-small';
             prevButton.innerHTML = '⏮️';
             prevButton.title = 'Previous track';
+            prevButton.disabled = this.isEasterEggMode;
             prevButton.onclick = () => this.previousTrack();
             
             // Play/Pause button
@@ -200,13 +313,25 @@ export class MusicManager {
             playPauseButton.title = 'Play/Pause';
             playPauseButton.onclick = () => this.togglePlayPause();
             
-            // Next track button
+            // Next track button (disabled in easter egg mode)
             const nextButton = document.createElement('button');
             nextButton.id = 'next-track';
             nextButton.className = 'btn btn-music-small';
             nextButton.innerHTML = '⏭️';
             nextButton.title = 'Next track';
+            nextButton.disabled = this.isEasterEggMode;
             nextButton.onclick = () => this.nextTrack();
+            
+            // Exit easter egg mode button (only shown in easter egg mode)
+            if (this.isEasterEggMode) {
+                const exitButton = document.createElement('button');
+                exitButton.id = 'exit-easter-egg';
+                exitButton.className = 'btn btn-music-small';
+                exitButton.innerHTML = 'X';
+                exitButton.title = 'Exit secret mode';
+                exitButton.onclick = () => this.deactivateEasterEggMode();
+                buttonRow.appendChild(exitButton);
+            }
             
             // Volume control
             const volumeContainer = document.createElement('div');
@@ -229,7 +354,12 @@ export class MusicManager {
             const trackInfo = document.createElement('div');
             trackInfo.id = 'track-info';
             trackInfo.className = 'track-info';
-            trackInfo.textContent = this.isEnabled ? `🎵 ${this.audioFiles.length} tracks ready` : 'Music disabled';
+            
+            if (this.isEasterEggMode) {
+                trackInfo.textContent = `🎵 Playing: ${this.currentEasterEggTrack}`;
+            } else {
+                trackInfo.textContent = this.isEnabled ? `🎵 ${this.audioFiles.length} tracks ready` : 'Music disabled';
+            }
             
             // Assemble the UI
             buttonRow.appendChild(minimizeButton);
@@ -258,6 +388,11 @@ export class MusicManager {
         
         // Recreate the controls with the new state
         this.createMusicControls();
+        
+        // Reapply easter egg styling if needed
+        if (this.isEasterEggMode && !this.isMinimized) {
+            this.updateEasterEggUI();
+        }
     }
 
     /**
@@ -281,8 +416,12 @@ export class MusicManager {
             this.updateTrackInfo('Loading...');
         });
         this.currentAudio.addEventListener('canplay', () => {
-            const trackName = this.getCurrentTrackName();
-            this.updateTrackInfo(`♪ ${trackName.substring(0, 30)}${trackName.length > 30 ? '...' : ''} ♪`);
+            if (this.isEasterEggMode) {
+                this.updateTrackInfo(`🎵 Playing: ${this.currentEasterEggTrack}`);
+            } else {
+                const trackName = this.getCurrentTrackName();
+                this.updateTrackInfo(`♪ ${trackName.substring(0, 30)}${trackName.length > 30 ? '...' : ''} ♪`);
+            }
         });
         
         return this.currentAudio;
@@ -292,7 +431,10 @@ export class MusicManager {
      * Handles when a track ends
      */
     handleTrackEnd() {
-        if (this.isLooping) {
+        if (this.isEasterEggMode) {
+            // Easter egg tracks should loop automatically, but just in case
+            this.playEasterEggTrack();
+        } else if (this.isLooping) {
             this.nextTrack();
         } else {
             this.stopMusic();
@@ -304,8 +446,13 @@ export class MusicManager {
      */
     handleAudioError(event) {
         console.error('Audio error:', event);
-        this.updateTrackInfo('Error - trying next...');
-        setTimeout(() => this.nextTrack(), 1000);
+        if (this.isEasterEggMode) {
+            this.updateTrackInfo('Easter egg error - exiting...');
+            setTimeout(() => this.deactivateEasterEggMode(), 2000);
+        } else {
+            this.updateTrackInfo('Error - trying next...');
+            setTimeout(() => this.nextTrack(), 1000);
+        }
     }
 
     /**
@@ -332,7 +479,12 @@ export class MusicManager {
         }
         
         this.isPlaying = false;
-        this.updateTrackInfo('Stopped');
+        
+        if (this.isEasterEggMode) {
+            this.updateTrackInfo(`🎵 ${this.currentEasterEggTrack} stopped`);
+        } else {
+            this.updateTrackInfo('Stopped');
+        }
         
         // Update play/pause button
         const playPauseButton = document.getElementById('play-pause');
@@ -354,9 +506,11 @@ export class MusicManager {
     }
 
     /**
-     * Skips to the next track in the shuffled playlist
+     * Skips to the next track in the shuffled playlist (disabled in easter egg mode)
      */
     nextTrack() {
+        if (this.isEasterEggMode) return;
+        
         // Move to next track in shuffled playlist
         this.playlistIndex = (this.playlistIndex + 1) % this.shuffledPlaylist.length;
         
@@ -376,9 +530,11 @@ export class MusicManager {
     }
 
     /**
-     * Goes to the previous track in the shuffled playlist
+     * Goes to the previous track in the shuffled playlist (disabled in easter egg mode)
      */
     previousTrack() {
+        if (this.isEasterEggMode) return;
+        
         // Move to previous track in shuffled playlist
         this.playlistIndex = (this.playlistIndex - 1 + this.shuffledPlaylist.length) % this.shuffledPlaylist.length;
         
@@ -395,6 +551,11 @@ export class MusicManager {
      * Plays the current track from the shuffled playlist
      */
     async playCurrentTrack() {
+        if (this.isEasterEggMode) {
+            await this.playEasterEggTrack();
+            return;
+        }
+        
         try {
             this.createAudioElement();
             const trackIndex = this.getCurrentTrackIndex();
@@ -430,19 +591,28 @@ export class MusicManager {
                 this.currentAudio.pause();
                 this.isPlaying = false;
                 playPauseButton.innerHTML = '▶️';
-                this.updateTrackInfo('Paused');
+                
+                if (this.isEasterEggMode) {
+                    this.updateTrackInfo(`🎵 ${this.currentEasterEggTrack} paused`);
+                } else {
+                    this.updateTrackInfo('Paused');
+                }
             } else {
                 // Not playing, so start
-                const trackIndex = this.getCurrentTrackIndex();
-                if (!this.currentAudio || this.currentAudio.src !== this.audioFiles[trackIndex]) {
-                    await this.playCurrentTrack();
+                if (this.isEasterEggMode) {
+                    await this.playEasterEggTrack();
                 } else {
-                    // Resume existing track
-                    await this.currentAudio.play();
-                    this.isPlaying = true;
-                    playPauseButton.innerHTML = '⏸️';
-                    const trackName = this.getCurrentTrackName();
-                    this.updateTrackInfo(`♪ ${trackName.substring(0, 30)}${trackName.length > 30 ? '...' : ''} ♪`);
+                    const trackIndex = this.getCurrentTrackIndex();
+                    if (!this.currentAudio || this.currentAudio.src !== this.audioFiles[trackIndex]) {
+                        await this.playCurrentTrack();
+                    } else {
+                        // Resume existing track
+                        await this.currentAudio.play();
+                        this.isPlaying = true;
+                        playPauseButton.innerHTML = '⏸️';
+                        const trackName = this.getCurrentTrackName();
+                        this.updateTrackInfo(`♪ ${trackName.substring(0, 30)}${trackName.length > 30 ? '...' : ''} ♪`);
+                    }
                 }
             }
         } catch (error) {
