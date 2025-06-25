@@ -9,6 +9,7 @@ import { UIManager } from './UIManager.js';
 import { ResultsManager } from './ResultsManager.js';
 import { LeaderboardManager } from './LeaderboardManager.js';
 import { DiscordManager } from '../discord/DiscordManager.js';
+import { MusicManager } from '../audio/MusicManager.js';
 import seedrandom from 'seedrandom';
 import { createClient } from '@supabase/supabase-js';
 
@@ -38,6 +39,7 @@ export default class GameApp {
         this.leaderboardManager.createLeaderboardDialog();
         this.discord = new DiscordManager();
         this.discord.initialize().catch(console.error);
+        this.musicManager = new MusicManager();
         
         document.addEventListener('death_link_triggered', (event) => {
             this.handleDeathLink(`Death Link from ${event.detail.source}`);
@@ -47,7 +49,17 @@ export default class GameApp {
         this.ui.updateDailyCountdown();
         this.setupEventListeners();
         this.setupAutocomplete();
+        this.initializeMusic();
         console.log('GameApp initialized');
+    }
+
+    async initializeMusic() {
+        try {
+            await this.musicManager.initialize();
+            console.log('Music system initialized');
+        } catch (error) {
+            console.warn('Failed to initialize music system:', error);
+        }
     }
 
     initializeSupabase() {
