@@ -666,30 +666,14 @@ export default class GameApp {
             return;
         }
 
-        const seedValue = seedInput.value.trim();
-
-        // Check for special seeds first
-        if (seedValue.toLowerCase() === 'imu') {
+        if (seedInput.value.toLowerCase() === 'imu') {
             window.location.reload();
             return;
         }
 
-        // Check if it's an easter egg track
-        if (this.musicManager.isEasterEggSeed(seedValue)) {
-            const success = this.musicManager.activateEasterEggMode(seedValue);
-            if (success) {
-                // Clear the seed input
-                seedInput.value = '';
-                return;
-            } else {
-                return;
-            }
-        }
-
-        // Normal seed behavior
         this.gameMode = 'filler';
         window.gameMode = 'filler';
-        this.currentSeed = seedValue;
+        this.currentSeed = seedInput.value;
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
         document.getElementById('skip-button').classList.remove('hidden');
