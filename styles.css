@@ -241,6 +241,18 @@ input::placeholder {
   box-shadow: var(--box-shadow);
 }
 
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn:disabled:hover {
+  transform: none;
+  background: linear-gradient(180deg, var(--success-color) 0%, #059669 100%);
+  box-shadow: var(--box-shadow);
+}
+
 .btn-hard {
   background: linear-gradient(180deg, var(--primary-color) 0%, #dc2626 100%);
   border-color: rgba(255, 255, 255, 0.6);
@@ -422,6 +434,18 @@ input::placeholder {
 .btn-music-small:hover {
   background: linear-gradient(180deg, #ee5a52 0%, #dc4c3f 100%);
   border-color: rgba(255, 255, 255, 0.8);
+}
+
+.btn-music-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-music-small:disabled:hover {
+  transform: none;
+  background: linear-gradient(180deg, #ff6b6b 0%, #ee5a52 100%);
+  box-shadow: var(--box-shadow);
 }
 
 .btn-music-minimize {
