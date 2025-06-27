@@ -90,7 +90,7 @@ export default class GameApp {
         // Store original Supabase client
         this.originalSupabase = this.supabase;
 
-        // Create a new Supabase client with custom fetch
+        // Create a new Supabase client with custom fetch that uses Discord proxy
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -104,14 +104,16 @@ export default class GameApp {
             global: {
                 fetch: async (url, options) => {
                     try {
-                        console.log('Proxying Supabase request:', url);
+                        console.log('Intercepting Supabase request:', url);
+                        
+                        // Use Discord proxy for all requests
                         const response = await this.discordProxy.fetch(url, options);
                         console.log('Proxied request successful:', response.status);
                         return response;
                     } catch (error) {
                         console.error('Proxied request failed:', error);
                         
-                        // For Discord environment, don't fallback to direct fetch as it will fail due to CSP
+                        // In Discord environment, don't fallback to direct fetch as it will fail due to CSP
                         throw new Error(`Discord proxy request failed: ${error.message}`);
                     }
                 }

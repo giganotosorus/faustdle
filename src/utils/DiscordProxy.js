@@ -46,32 +46,13 @@ export class DiscordProxy {
 
         console.log('Discord proxy fetch requested for:', url);
 
-        // For Supabase URLs, use the proper proxy format
+        // Always use Supabase proxy for any Supabase URL
         if (url.includes('supabase.co')) {
             return await this.fetchViaSupabaseProxy(url, options);
         }
 
-        // Try multiple proxy methods in order of preference
-        const methods = [
-            () => this.fetchViaSDKCommands(url, options),
-            () => this.fetchViaProxyEndpoint(url, options)
-        ];
-
-        let lastError;
-        for (const method of methods) {
-            try {
-                const response = await method();
-                console.log('Proxy method succeeded:', response.status);
-                return response;
-            } catch (error) {
-                console.warn('Proxy method failed, trying next:', error.message);
-                lastError = error;
-            }
-        }
-
-        // All proxy methods failed
-        console.error('All proxy methods failed, last error:', lastError);
-        throw new Error(`Discord proxy failed: ${lastError.message}`);
+        // For other URLs, try general proxy methods
+        return await this.fetchViaProxyEndpoint(url, options);
     }
 
     /**
@@ -82,70 +63,80 @@ export class DiscordProxy {
         console.log('Using Supabase proxy method for URL:', url);
         
         try {
-            // Extract the path from the Supabase URL
-            const supabaseUrl = new URL(url);
-            const pathAndQuery = supabaseUrl.pathname + supabaseUrl.search;
+            // Parse the original Supabase URL
+            const originalUrl = new URL(url);
             
-            // Use Discord's proxy format with the specific target path: /.proxy/supabase
-            // This corresponds to the Activity URL Mapping:
-            // Target: /.proxy/supabase
-            // Prefix: https://qrprexuziojupqvvdefy.supabase.co/
+            // Extract everything after the domain (path + query + hash)
+            const pathAndQuery = originalUrl.pathname + originalUrl.search + originalUrl.hash;
+            
+            // Build the proxy URL using Discord's proxy format
+            // This maps to: Target: /.proxy/supabase, Prefix: https://qrprexuziojupqvvdefy.supabase.co/
             const proxyUrl = `${this.proxyBaseUrl}/.proxy/supabase${pathAndQuery}`;
             
-            console.log('Supabase proxy URL:', proxyUrl);
+            console.log('Original URL:', url);
+            console.log('Proxy URL:', proxyUrl);
             
-            const proxyOptions = {
-                ...options,
-                headers: {
-                    ...options.headers,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'apikey': options.headers?.apikey || options.headers?.Authorization?.replace('Bearer ', ''),
-                    'X-Discord-Proxy': 'true'
-                },
-                mode: 'cors',
-                credentials: 'omit'
+            // Prepare headers for the proxy request
+            const proxyHeaders = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Discord-Proxy': 'true'
             };
 
-            // Remove Authorization header if apikey is set (Supabase prefers apikey)
-            if (proxyOptions.headers.apikey && proxyOptions.headers.Authorization) {
-                delete proxyOptions.headers.Authorization;
+            // Handle Supabase authentication headers
+            if (options.headers) {
+                // Copy over important headers
+                Object.keys(options.headers).forEach(key => {
+                    const lowerKey = key.toLowerCase();
+                    if (lowerKey === 'authorization' || lowerKey === 'apikey' || lowerKey === 'prefer') {
+                        proxyHeaders[key] = options.headers[key];
+                    }
+                });
             }
+
+            const proxyOptions = {
+                ...options,
+                headers: proxyHeaders,
+                mode: 'cors',
+                credentials: 'omit' // Don't send credentials to Discord proxy
+            };
+
+            console.log('Proxy request options:', {
+                url: proxyUrl,
+                method: proxyOptions.method || 'GET',
+                headers: proxyHeaders
+            });
 
             const response = await fetch(proxyUrl, proxyOptions);
             
+            console.log('Proxy response:', {
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries())
+            });
+            
             if (!response.ok) {
-                throw new Error(`Proxy request failed: ${response.status} ${response.statusText}`);
+                const errorText = await response.text();
+                console.error('Proxy response error:', errorText);
+                throw new Error(`Proxy request failed: ${response.status} ${response.statusText} - ${errorText}`);
             }
             
             return response;
         } catch (error) {
             console.error('Supabase proxy failed:', error);
-            throw error;
+            throw new Error(`Discord Supabase proxy failed: ${error.message}`);
         }
     }
 
     /**
-     * Method 1: Use Discord SDK commands.fetch if available
-     */
-    async fetchViaSDKCommands(url, options) {
-        if (!this.discordSDK?.commands?.fetch) {
-            throw new Error('Discord SDK commands.fetch not available');
-        }
-
-        console.log('Trying Discord SDK commands.fetch');
-        return await this.discordSDK.commands.fetch(url, options);
-    }
-
-    /**
-     * Method 2: Use Discord's .proxy/ endpoint for non-Supabase URLs
+     * Use Discord's .proxy/ endpoint for general URLs
      */
     async fetchViaProxyEndpoint(url, options) {
-        console.log('Trying Discord proxy endpoint');
+        console.log('Trying Discord proxy endpoint for general URL');
         
         // Convert URL to proxy format
         const proxyUrl = this.convertToProxyUrl(url);
-        console.log('Proxy URL:', proxyUrl);
+        console.log('General proxy URL:', proxyUrl);
 
         const proxyOptions = {
             ...options,
@@ -192,7 +183,6 @@ export class DiscordProxy {
         return {
             isDiscordActivity: this.isDiscordActivity,
             hasSDK: !!this.discordSDK,
-            hasSDKFetch: !!(this.discordSDK?.commands?.fetch),
             proxyBaseUrl: this.proxyBaseUrl,
             currentUrl: window.location.href,
             expectedProxyFormat: `${this.proxyBaseUrl}/.proxy/supabase/rest/v1/...`
