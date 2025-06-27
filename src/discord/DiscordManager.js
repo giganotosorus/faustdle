@@ -19,15 +19,33 @@ export class DiscordManager {
 
             // Only initialize Discord SDK if we're in Discord environment
             if (this.isDiscordActivity) {
+                console.log('Initializing Discord SDK...');
+                
+                // Import Discord SDK with proper error handling
+                let DiscordSDK;
+                try {
+                    const module = await import('@discord/embedded-app-sdk');
+                    DiscordSDK = module.DiscordSDK || module.Discord || module.default;
+                    
+                    if (!DiscordSDK) {
+                        throw new Error('Discord SDK not found in module');
+                    }
+                } catch (importError) {
+                    console.error('Failed to import Discord SDK:', importError);
+                    throw new Error('Discord SDK import failed');
+                }
+
                 // Initialize Discord Embedded App SDK
-                const { Discord } = await import('@discord/embedded-app-sdk');
-                this.sdk = new Discord({
+                this.sdk = new DiscordSDK({
                     clientId: this.clientId
                 });
 
+                console.log('Discord SDK created, waiting for ready...');
                 await this.sdk.ready();
                 this.connected = true;
                 this.startTimestamp = Date.now();
+                
+                console.log('Discord SDK ready, initializing auth...');
                 
                 // Initialize Discord authentication
                 this.auth = new DiscordAuth(supabase, this.sdk);
@@ -90,16 +108,19 @@ export class DiscordManager {
         if (!this.connected || !this.sdk) return;
 
         try {
-            await this.sdk.setActivity({
-                details: 'Playing Faustdle',
-                state: 'Waiting to start...',
-                largeImageKey: 'faustdle',
-                largeImageText: 'Faustdle',
-                startTimestamp: this.startTimestamp,
-                instance: false,
-                buttons: [
-                    { label: 'Play Faustdle', url: 'https://faustdle.com' }
-                ]
+            await this.sdk.commands.setActivity({
+                activity: {
+                    details: 'Playing Faustdle',
+                    state: 'Waiting to start...',
+                    assets: {
+                        large_image: 'faustdle',
+                        large_text: 'Faustdle'
+                    },
+                    timestamps: {
+                        start: this.startTimestamp
+                    },
+                    instance: false
+                }
             });
         } catch (error) {
             console.warn('Failed to set default activity:', error);
@@ -116,18 +137,21 @@ export class DiscordManager {
         const elapsedTime = this.getElapsedTimeText();
 
         try {
-            await this.sdk.setActivity({
-                details: `${modeText} - ${guessText}`,
-                state: `Time: ${elapsedTime}`,
-                largeImageKey: 'faustdle',
-                largeImageText: emojiGrid || 'No guesses yet',
-                smallImageKey: mode.toLowerCase(),
-                smallImageText: modeText,
-                startTimestamp: this.startTimestamp,
-                instance: false,
-                buttons: [
-                    { label: 'Play Faustdle', url: 'https://faustdle.com' }
-                ]
+            await this.sdk.commands.setActivity({
+                activity: {
+                    details: `${modeText} - ${guessText}`,
+                    state: `Time: ${elapsedTime}`,
+                    assets: {
+                        large_image: 'faustdle',
+                        large_text: emojiGrid || 'No guesses yet',
+                        small_image: mode.toLowerCase(),
+                        small_text: modeText
+                    },
+                    timestamps: {
+                        start: this.startTimestamp
+                    },
+                    instance: false
+                }
             });
         } catch (error) {
             console.warn('Failed to update game activity:', error);
@@ -143,18 +167,21 @@ export class DiscordManager {
         const elapsedTime = this.getElapsedTimeText();
 
         try {
-            await this.sdk.setActivity({
-                details: `${modeText} Streak Mode`,
-                state: `Streak: ${streak} | Time: ${elapsedTime}`,
-                largeImageKey: 'faustdle',
-                largeImageText: emojiGrid || 'Starting new streak...',
-                smallImageKey: 'streak',
-                smallImageText: `${streak} Streak`,
-                startTimestamp: this.startTimestamp,
-                instance: false,
-                buttons: [
-                    { label: 'Play Faustdle', url: 'https://faustdle.com' }
-                ]
+            await this.sdk.commands.setActivity({
+                activity: {
+                    details: `${modeText} Streak Mode`,
+                    state: `Streak: ${streak} | Time: ${elapsedTime}`,
+                    assets: {
+                        large_image: 'faustdle',
+                        large_text: emojiGrid || 'Starting new streak...',
+                        small_image: 'streak',
+                        small_text: `${streak} Streak`
+                    },
+                    timestamps: {
+                        start: this.startTimestamp
+                    },
+                    instance: false
+                }
             });
         } catch (error) {
             console.warn('Failed to update streak activity:', error);
@@ -221,7 +248,7 @@ export class DiscordManager {
 
     disconnect() {
         if (this.connected && this.sdk) {
-            this.sdk.destroy();
+            this.sdk.close();
         }
         this.connected = false;
         this.sdk = null;

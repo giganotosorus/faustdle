@@ -83,30 +83,39 @@ export default class GameApp {
 
         console.log('Setting up Supabase proxy for Discord environment');
 
-        // Create a custom fetch function that uses Discord proxy
-        const originalFetch = this.supabase.rest.fetch;
-        this.supabase.rest.fetch = async (url, options) => {
-            try {
-                return await this.discordProxy.fetch(url, options);
-            } catch (error) {
-                console.error('Proxied request failed, falling back to original:', error);
-                // Fallback to original fetch (might fail due to CSP)
-                return originalFetch(url, options);
-            }
-        };
+        // Store original Supabase client
+        const originalSupabase = this.supabase;
 
-        // Also update auth fetch
-        if (this.supabase.auth.fetch) {
-            const originalAuthFetch = this.supabase.auth.fetch;
-            this.supabase.auth.fetch = async (url, options) => {
-                try {
-                    return await this.discordProxy.fetch(url, options);
-                } catch (error) {
-                    console.error('Proxied auth request failed, falling back to original:', error);
-                    return originalAuthFetch(url, options);
+        // Create a new Supabase client with custom fetch
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        this.supabase = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true,
+                flowType: 'pkce'
+            },
+            global: {
+                fetch: async (url, options) => {
+                    try {
+                        console.log('Proxying request:', url);
+                        return await this.discordProxy.fetch(url, options);
+                    } catch (error) {
+                        console.error('Proxied request failed:', error);
+                        // Fallback to original fetch (might fail due to CSP)
+                        return fetch(url, options);
+                    }
                 }
-            };
-        }
+            }
+        });
+
+        // Update all managers with the new Supabase client
+        this.ui.supabase = this.supabase;
+        this.leaderboardManager.supabase = this.supabase;
+
+        console.log('Supabase proxy setup complete');
     }
 
     async initializeMusic() {

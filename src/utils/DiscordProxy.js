@@ -19,17 +19,24 @@ export class DiscordProxy {
         }
 
         try {
-            // Use Discord's fetch proxy
+            // Convert URL to Discord proxy format
             const proxyUrl = this.getProxyUrl(url);
-            console.log('Making proxied request to:', proxyUrl);
+            console.log('Making proxied request:', {
+                original: url,
+                proxied: proxyUrl
+            });
             
-            return fetch(proxyUrl, {
+            // Make the request through Discord's proxy
+            const response = await fetch(proxyUrl, {
                 ...options,
                 headers: {
                     ...options.headers,
                     'X-Discord-Proxy': 'true'
                 }
             });
+
+            console.log('Proxy response:', response.status, response.statusText);
+            return response;
         } catch (error) {
             console.error('Discord proxy request failed:', error);
             throw error;
