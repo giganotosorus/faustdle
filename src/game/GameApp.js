@@ -49,6 +49,8 @@ export default class GameApp {
             // Set up Discord proxy if we're in Discord
             if (this.discord.sdk) {
                 this.discordProxy = new DiscordProxy(this.discord.sdk);
+                console.log('Discord proxy status:', this.discordProxy.getProxyStatus());
+                
                 // Update Supabase client to use proxy
                 this.setupSupabaseProxy();
             }
@@ -107,13 +109,16 @@ export default class GameApp {
                         console.log('Proxied request successful:', response.status);
                         return response;
                     } catch (error) {
-                        console.error('Proxied request failed, trying fallback:', error);
-                        // Try original Supabase client as fallback
-                        if (this.originalSupabase) {
-                            console.log('Using original Supabase client as fallback');
-                            return this.originalSupabase.rest.fetch(url, options);
+                        console.error('Proxied request failed:', error);
+                        
+                        // Try original fetch as absolute last resort
+                        console.warn('Attempting direct fetch as last resort (will likely fail due to CSP)');
+                        try {
+                            return await fetch(url, options);
+                        } catch (directError) {
+                            console.error('Direct fetch also failed:', directError);
+                            throw new Error(`All request methods failed. Proxy error: ${error.message}, Direct error: ${directError.message}`);
                         }
-                        throw error;
                     }
                 }
             }
