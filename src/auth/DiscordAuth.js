@@ -9,6 +9,7 @@ export class DiscordAuth {
         this.user = null;
         this.session = null;
         this.isAuthenticated = false;
+        this.isDiscordActivity = window.location.href.includes('discordsays.com');
         
         // Discord OAuth configuration
         this.discordClientId = '1351722811718373447'; // Your Discord app client ID
@@ -57,7 +58,13 @@ export class DiscordAuth {
 
             console.log('Discord user obtained:', discordUser.username);
 
-            // Try Supabase Discord OAuth first
+            // In Discord activities, we can't use OAuth redirects due to CSP
+            // So we'll create an anonymous session with Discord user data
+            if (this.isDiscordActivity) {
+                return await this.createAnonymousSession();
+            }
+
+            // Try Supabase Discord OAuth for non-Discord environments
             try {
                 const { data, error } = await this.supabase.auth.signInWithOAuth({
                     provider: 'discord',
@@ -77,58 +84,14 @@ export class DiscordAuth {
             } catch (oauthError) {
                 console.warn('Discord OAuth failed, trying alternative method:', oauthError);
                 
-                // Alternative: Try to get access token from Discord SDK
-                return await this.authenticateWithDiscordToken();
+                // Fallback to anonymous session
+                return await this.createAnonymousSession();
             }
         } catch (error) {
             console.error('Discord authentication failed:', error);
             
             // Fallback: create anonymous session with Discord user data
             return await this.createAnonymousSession();
-        }
-    }
-
-    /**
-     * Authenticate using Discord access token (alternative method)
-     */
-    async authenticateWithDiscordToken() {
-        try {
-            // Try to get access token from Discord SDK
-            const authResult = await this.discordSDK.commands.authorize({
-                client_id: this.discordClientId,
-                response_type: 'token',
-                state: crypto.randomUUID(),
-                prompt: 'none',
-                scope: ['identify', 'email'],
-                redirect_uri: this.redirectUri
-            });
-
-            if (authResult && authResult.access_token) {
-                // Use the access token with Supabase
-                const { data, error } = await this.supabase.auth.signInWithOAuth({
-                    provider: 'discord',
-                    options: {
-                        skipBrowserRedirect: true,
-                        accessToken: authResult.access_token
-                    }
-                });
-
-                if (error) {
-                    throw error;
-                }
-
-                this.session = data.session;
-                this.user = data.user;
-                this.isAuthenticated = true;
-
-                console.log('Discord token authentication successful');
-                return true;
-            } else {
-                throw new Error('No access token received from Discord');
-            }
-        } catch (error) {
-            console.error('Discord token authentication failed:', error);
-            return false;
         }
     }
 

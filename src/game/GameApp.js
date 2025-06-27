@@ -10,6 +10,7 @@ import { ResultsManager } from './ResultsManager.js';
 import { LeaderboardManager } from './LeaderboardManager.js';
 import { DiscordManager } from '../discord/DiscordManager.js';
 import { MusicManager } from '../audio/MusicManager.js';
+import { DiscordProxy } from '../utils/DiscordProxy.js';
 import seedrandom from 'seedrandom';
 import { createClient } from '@supabase/supabase-js';
 
@@ -29,6 +30,7 @@ export default class GameApp {
         this.selectedStreakMode = 'normal';
         this.previousWinner = null;
         this.isDiscordAuthenticated = false;
+        this.discordProxy = null;
         
         this.initializeSupabase();
         this.autocomplete = new AutocompleteManager();
@@ -42,7 +44,14 @@ export default class GameApp {
         this.musicManager = new MusicManager();
         
         // Initialize Discord with Supabase
-        this.discord.initialize(this.supabase).catch(console.error);
+        this.discord.initialize(this.supabase).then(() => {
+            // Set up Discord proxy if we're in Discord
+            if (this.discord.sdk) {
+                this.discordProxy = new DiscordProxy(this.discord.sdk);
+                // Update Supabase client to use proxy
+                this.setupSupabaseProxy();
+            }
+        }).catch(console.error);
         
         // Listen for Discord auth changes
         document.addEventListener('discord-auth-change', (event) => {
@@ -62,6 +71,71 @@ export default class GameApp {
         this.setupAutocomplete();
         this.initializeMusic();
         console.log('GameApp initialized');
+    }
+
+    /**
+     * Set up Supabase to use Discord proxy when in Discord environment
+     */
+    setupSupabaseProxy() {
+        if (!this.discordProxy || !this.discordProxy.isInDiscord()) {
+            return;
+        }
+
+        console.log('Setting up Supabase proxy for Discord environment');
+
+        // Create a custom fetch function that uses Discord proxy
+        const originalFetch = this.supabase.rest.fetch;
+        this.supabase.rest.fetch = async (url, options) => {
+            try {
+                return await this.discordProxy.fetch(url, options);
+            } catch (error) {
+                console.error('Proxied request failed, falling back to original:', error);
+                // Fallback to original fetch (might fail due to CSP)
+                return originalFetch(url, options);
+            }
+        };
+
+        // Also update auth fetch
+        if (this.supabase.auth.fetch) {
+            const originalAuthFetch = this.supabase.auth.fetch;
+            this.supabase.auth.fetch = async (url, options) => {
+                try {
+                    return await this.discordProxy.fetch(url, options);
+                } catch (error) {
+                    console.error('Proxied auth request failed, falling back to original:', error);
+                    return originalAuthFetch(url, options);
+                }
+            };
+        }
+    }
+
+    async initializeMusic() {
+        try {
+            await this.musicManager.initialize();
+            console.log('Music system initialized');
+        } catch (error) {
+            console.warn('Failed to initialize music system:', error);
+        }
+    }
+
+    initializeSupabase() {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('Supabase configuration missing. Please check your environment variables.');
+            return;
+        }
+
+        this.supabase = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true, // Enable URL detection for OAuth
+                flowType: 'pkce' // Use PKCE flow for better security
+            }
+        });
+        console.log('Supabase client initialized');
     }
 
     /**
@@ -137,35 +211,6 @@ export default class GameApp {
                 </div>
             `;
         }
-    }
-
-    async initializeMusic() {
-        try {
-            await this.musicManager.initialize();
-            console.log('Music system initialized');
-        } catch (error) {
-            console.warn('Failed to initialize music system:', error);
-        }
-    }
-
-    initializeSupabase() {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-        if (!supabaseUrl || !supabaseKey) {
-            console.error('Supabase configuration missing. Please check your environment variables.');
-            return;
-        }
-
-        this.supabase = createClient(supabaseUrl, supabaseKey, {
-            auth: {
-                autoRefreshToken: true,
-                persistSession: true,
-                detectSessionInUrl: true, // Enable URL detection for OAuth
-                flowType: 'pkce' // Use PKCE flow for better security
-            }
-        });
-        console.log('Supabase client initialized');
     }
 
     getDailyChallengeCache() {
