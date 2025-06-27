@@ -20,11 +20,17 @@ export default defineConfig({
         tos: 'tos.html',
         privacy: 'privacy.html'
       }
-    }
+    },
+    // Ensure audio files are copied to the build output
+    copyPublicDir: true
   },
+  // Make sure audio files are treated as static assets
+  assetsInclude: ['**/*.mp3'],
   resolve: {
     alias: {
       '@supabase/supabase-js': '/node_modules/@supabase/supabase-js/dist/module/index.js'
     }
-  }
+  },
+  // Configure public directory
+  publicDir: 'public'
 });
