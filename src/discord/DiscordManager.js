@@ -35,9 +35,9 @@ export class DiscordManager {
                     throw new Error('Discord SDK import failed');
                 }
 
-                // Initialize Discord Embedded App SDK
+                // Initialize Discord Embedded App SDK with correct format
                 this.sdk = new DiscordSDK({
-                    clientId: this.clientId
+                    clientId: this.clientId // Pass as string directly, not as object
                 });
 
                 console.log('Discord SDK created, waiting for ready...');

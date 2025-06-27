@@ -19,14 +19,18 @@ export class DiscordProxy {
         }
 
         try {
-            // Convert URL to Discord proxy format
-            const proxyUrl = this.getProxyUrl(url);
-            console.log('Making proxied request:', {
-                original: url,
-                proxied: proxyUrl
-            });
+            console.log('Making proxied request to:', url);
             
-            // Make the request through Discord's proxy
+            // Use Discord SDK's fetch method if available
+            if (this.discordSDK.commands && this.discordSDK.commands.fetch) {
+                console.log('Using Discord SDK fetch');
+                return await this.discordSDK.commands.fetch(url, options);
+            }
+            
+            // Fallback: try to use the proxy URL format
+            const proxyUrl = this.getProxyUrl(url);
+            console.log('Using proxy URL:', proxyUrl);
+            
             const response = await fetch(proxyUrl, {
                 ...options,
                 headers: {
@@ -39,17 +43,27 @@ export class DiscordProxy {
             return response;
         } catch (error) {
             console.error('Discord proxy request failed:', error);
-            throw error;
+            
+            // Last resort: try direct fetch (will likely fail due to CSP)
+            console.warn('Attempting direct fetch as fallback');
+            return fetch(url, options);
         }
     }
 
     /**
      * Convert a regular URL to a Discord proxy URL
+     * Discord proxy format: https://[app-id].discordsays.com/.proxy/[base64-encoded-url]
      */
     getProxyUrl(originalUrl) {
-        // Discord proxy format: https://[app-id].discordsays.com/.proxy/[encoded-url]
-        const encodedUrl = encodeURIComponent(originalUrl);
-        return `https://${this.discordAppId}.discordsays.com/.proxy/${encodedUrl}`;
+        try {
+            // Remove protocol and encode the URL
+            const urlWithoutProtocol = originalUrl.replace(/^https?:\/\//, '');
+            const encodedUrl = btoa(urlWithoutProtocol);
+            return `https://${this.discordAppId}.discordsays.com/.proxy/${encodedUrl}`;
+        } catch (error) {
+            console.error('Failed to create proxy URL:', error);
+            return originalUrl;
+        }
     }
 
     /**

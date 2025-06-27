@@ -31,6 +31,7 @@ export default class GameApp {
         this.previousWinner = null;
         this.isDiscordAuthenticated = false;
         this.discordProxy = null;
+        this.originalSupabase = null;
         
         this.initializeSupabase();
         this.autocomplete = new AutocompleteManager();
@@ -78,13 +79,14 @@ export default class GameApp {
      */
     setupSupabaseProxy() {
         if (!this.discordProxy || !this.discordProxy.isInDiscord()) {
+            console.log('Not in Discord environment, skipping proxy setup');
             return;
         }
 
         console.log('Setting up Supabase proxy for Discord environment');
 
         // Store original Supabase client
-        const originalSupabase = this.supabase;
+        this.originalSupabase = this.supabase;
 
         // Create a new Supabase client with custom fetch
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -100,12 +102,18 @@ export default class GameApp {
             global: {
                 fetch: async (url, options) => {
                     try {
-                        console.log('Proxying request:', url);
-                        return await this.discordProxy.fetch(url, options);
+                        console.log('Proxying Supabase request:', url);
+                        const response = await this.discordProxy.fetch(url, options);
+                        console.log('Proxied request successful:', response.status);
+                        return response;
                     } catch (error) {
-                        console.error('Proxied request failed:', error);
-                        // Fallback to original fetch (might fail due to CSP)
-                        return fetch(url, options);
+                        console.error('Proxied request failed, trying fallback:', error);
+                        // Try original Supabase client as fallback
+                        if (this.originalSupabase) {
+                            console.log('Using original Supabase client as fallback');
+                            return this.originalSupabase.rest.fetch(url, options);
+                        }
+                        throw error;
                     }
                 }
             }
