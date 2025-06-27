@@ -111,14 +111,8 @@ export default class GameApp {
                     } catch (error) {
                         console.error('Proxied request failed:', error);
                         
-                        // Try original fetch as absolute last resort
-                        console.warn('Attempting direct fetch as last resort (will likely fail due to CSP)');
-                        try {
-                            return await fetch(url, options);
-                        } catch (directError) {
-                            console.error('Direct fetch also failed:', directError);
-                            throw new Error(`All request methods failed. Proxy error: ${error.message}, Direct error: ${directError.message}`);
-                        }
+                        // For Discord environment, don't fallback to direct fetch as it will fail due to CSP
+                        throw new Error(`Discord proxy request failed: ${error.message}`);
                     }
                 }
             }

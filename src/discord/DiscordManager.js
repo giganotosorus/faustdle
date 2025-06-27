@@ -70,9 +70,9 @@ export class DiscordManager {
 
             console.log('Creating Discord SDK instance...');
             
-            // Create SDK instance with proper configuration
+            // Create SDK instance with proper configuration - FIX: Pass clientId as string
             this.sdk = new DiscordSDK({
-                clientId: this.clientId,
+                clientId: this.clientId, // This is already a string
                 disableConsoleLogOverride: true
             });
 
