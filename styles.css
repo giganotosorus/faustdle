@@ -49,6 +49,7 @@ body {
   border-radius: 1rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   border: 2px solid rgba(255, 255, 255, 0.3);
+  position: relative;
 }
 
 h1 {
@@ -718,6 +719,48 @@ td:not(:last-child) {
   text-align: center;
   border: 2px solid rgba(255, 255, 255, 0.4);
   box-shadow: var(--box-shadow);
+}
+
+/* Authentication Status Indicator */
+.auth-indicator {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+}
+
+.auth-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: var(--box-shadow);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+.auth-status.authenticated {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.95) 100%);
+  color: white;
+  text-shadow: var(--text-shadow);
+}
+
+.auth-status.unauthenticated {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.9) 0%, rgba(217, 119, 6, 0.95) 100%);
+  color: white;
+  text-shadow: var(--text-shadow);
+}
+
+.auth-icon {
+  font-size: 1rem;
+}
+
+.auth-text {
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 @keyframes slideIn {
@@ -1417,6 +1460,17 @@ label {
     width: 35px;
     height: 35px;
     font-size: 0.8rem;
+  }
+  
+  .auth-indicator {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin-bottom: 1rem;
+  }
+  
+  .auth-text {
+    font-size: 0.75rem;
   }
   
   :root {

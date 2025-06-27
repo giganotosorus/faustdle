@@ -28,6 +28,7 @@ export default class GameApp {
         this.isStreakMode = false;
         this.selectedStreakMode = 'normal';
         this.previousWinner = null;
+        this.isDiscordAuthenticated = false;
         
         this.initializeSupabase();
         this.autocomplete = new AutocompleteManager();
@@ -38,8 +39,18 @@ export default class GameApp {
         this.leaderboardManager = new LeaderboardManager(this.supabase);
         this.leaderboardManager.createLeaderboardDialog();
         this.discord = new DiscordManager();
-        this.discord.initialize().catch(console.error);
         this.musicManager = new MusicManager();
+        
+        // Initialize Discord with Supabase
+        this.discord.initialize(this.supabase).catch(console.error);
+        
+        // Listen for Discord auth changes
+        document.addEventListener('discord-auth-change', (event) => {
+            this.handleDiscordAuthChange(event.detail);
+        });
+        
+        // Check for OAuth callback on page load
+        this.handleOAuthCallback();
         
         document.addEventListener('death_link_triggered', (event) => {
             this.handleDeathLink(`Death Link from ${event.detail.source}`);
@@ -51,6 +62,81 @@ export default class GameApp {
         this.setupAutocomplete();
         this.initializeMusic();
         console.log('GameApp initialized');
+    }
+
+    /**
+     * Handle OAuth callback if present in URL
+     */
+    async handleOAuthCallback() {
+        try {
+            // Check if we have OAuth parameters in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const fragment = new URLSearchParams(window.location.hash.substring(1));
+            
+            if (urlParams.has('code') || fragment.has('access_token')) {
+                console.log('OAuth callback detected');
+                
+                // Let Supabase handle the OAuth callback
+                const { data, error } = await this.supabase.auth.getSessionFromUrl();
+                
+                if (error) {
+                    console.error('OAuth callback error:', error);
+                } else if (data.session) {
+                    console.log('OAuth callback successful');
+                    this.isDiscordAuthenticated = true;
+                    this.updateAuthenticationUI();
+                    
+                    // Clean up URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+        } catch (error) {
+            console.error('Error handling OAuth callback:', error);
+        }
+    }
+
+    handleDiscordAuthChange(detail) {
+        const { event, session, user } = detail;
+        this.isDiscordAuthenticated = !!session;
+        
+        console.log('Discord auth state changed:', event, {
+            authenticated: this.isDiscordAuthenticated,
+            user: user?.id
+        });
+
+        // Update UI to show authentication status
+        this.updateAuthenticationUI();
+    }
+
+    updateAuthenticationUI() {
+        // Add authentication indicator to the UI
+        let authIndicator = document.getElementById('auth-indicator');
+        if (!authIndicator) {
+            authIndicator = document.createElement('div');
+            authIndicator.id = 'auth-indicator';
+            authIndicator.className = 'auth-indicator';
+            document.querySelector('.container').appendChild(authIndicator);
+        }
+
+        if (this.isDiscordAuthenticated) {
+            const discordAuth = this.discord.getAuth();
+            const discordUser = discordAuth?.getDiscordUserInfo();
+            const username = discordUser?.username || discordUser?.global_name || 'Discord User';
+            
+            authIndicator.innerHTML = `
+                <div class="auth-status authenticated">
+                    <span class="auth-icon">✅</span>
+                    <span class="auth-text">Authenticated as ${username}</span>
+                </div>
+            `;
+        } else {
+            authIndicator.innerHTML = `
+                <div class="auth-status unauthenticated">
+                    <span class="auth-icon">⚠️</span>
+                    <span class="auth-text">Limited features - Authentication recommended</span>
+                </div>
+            `;
+        }
     }
 
     async initializeMusic() {
@@ -71,7 +157,14 @@ export default class GameApp {
             return;
         }
 
-        this.supabase = createClient(supabaseUrl, supabaseKey);
+        this.supabase = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true, // Enable URL detection for OAuth
+                flowType: 'pkce' // Use PKCE flow for better security
+            }
+        });
         console.log('Supabase client initialized');
     }
 
@@ -492,9 +585,17 @@ export default class GameApp {
             const completionTime = this.timer.getElapsedTime();
             
             try {
-                await this.supabase.rpc('increment_daily_players', {
-                    challenge_date: today
-                });
+                // Use authenticated call if possible, fallback to RPC
+                if (this.isDiscordAuthenticated) {
+                    await this.supabase.rpc('increment_daily_players', {
+                        challenge_date: today
+                    });
+                } else {
+                    // For unauthenticated users, still try the RPC call
+                    await this.supabase.rpc('increment_daily_players', {
+                        challenge_date: today
+                    });
+                }
 
                 const { data } = await this.supabase
                     .from('daily_players')

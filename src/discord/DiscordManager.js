@@ -1,3 +1,5 @@
+import { DiscordAuth } from '../auth/DiscordAuth.js';
+
 export class DiscordManager {
     constructor() {
         this.connected = false;
@@ -6,24 +8,50 @@ export class DiscordManager {
         this.clientId = '1351722811718373447';
         this.guessHistory = [];
         this.currentMode = null;
+        this.auth = null;
+        this.isDiscordActivity = window.location.href.includes('discordsays.com');
     }
 
-    async initialize() {
+    async initialize(supabase) {
         try {
             // Add Discord embed meta tags
             this.addDiscordMetaTags();
 
-            // Initialize Discord Embedded App SDK
-            const { Discord } = await import('@discord/embedded-app-sdk');
-            this.sdk = new Discord({
-                clientId: this.clientId
-            });
+            // Only initialize Discord SDK if we're in Discord environment
+            if (this.isDiscordActivity) {
+                // Initialize Discord Embedded App SDK
+                const { Discord } = await import('@discord/embedded-app-sdk');
+                this.sdk = new Discord({
+                    clientId: this.clientId
+                });
 
-            await this.sdk.ready();
-            this.connected = true;
-            this.startTimestamp = Date.now();
-            this.setDefaultActivity();
-            console.log('Discord Embedded App SDK connected');
+                await this.sdk.ready();
+                this.connected = true;
+                this.startTimestamp = Date.now();
+                
+                // Initialize Discord authentication
+                this.auth = new DiscordAuth(supabase, this.sdk);
+                const authSuccess = await this.auth.initialize();
+                
+                if (authSuccess) {
+                    console.log('Discord authentication successful');
+                    // Set up auth state listener
+                    this.auth.onAuthStateChange((event, session) => {
+                        console.log('Auth state changed:', event, session);
+                        // Emit custom event for other parts of the app
+                        document.dispatchEvent(new CustomEvent('discord-auth-change', {
+                            detail: { event, session, user: session?.user }
+                        }));
+                    });
+                } else {
+                    console.warn('Discord authentication failed, some features may be limited');
+                }
+
+                this.setDefaultActivity();
+                console.log('Discord Embedded App SDK connected');
+            } else {
+                console.log('Not in Discord environment, Discord features disabled');
+            }
         } catch (error) {
             console.warn('Discord presence failed to initialize:', error);
             this.connected = false;
@@ -172,12 +200,32 @@ export class DiscordManager {
         this.setDefaultActivity();
     }
 
+    // Authentication methods
+    getAuth() {
+        return this.auth;
+    }
+
+    isAuthenticated() {
+        return this.auth?.isUserAuthenticated() || false;
+    }
+
+    getCurrentUser() {
+        return this.auth?.getCurrentUser() || null;
+    }
+
+    async signOut() {
+        if (this.auth) {
+            await this.auth.signOut();
+        }
+    }
+
     disconnect() {
         if (this.connected && this.sdk) {
             this.sdk.destroy();
         }
         this.connected = false;
         this.sdk = null;
+        this.auth = null;
         this.startTimestamp = null;
         this.guessHistory = [];
         this.currentMode = null;
