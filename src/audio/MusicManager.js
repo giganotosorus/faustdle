@@ -9,55 +9,55 @@ export class MusicManager {
         this.volume = 30; // Default volume (30%)
         this.currentTrackIndex = 0;
         this.audioFiles = [
-            '/public/audio/audio files/If You Live.mp3',
-            '/public/audio/audio files/The Best Oden Shop in the World!.mp3',
-            '/public/audio/audio files/Luffy\'s Fierce Attack!.mp3',
-            '/public/audio/audio files/I\'m Going to be the Pirate King!.mp3',
-            '/public/audio/audio files/Luffy vs. Ratchet, Round 1.mp3',
-            '/public/audio/audio files/Woonan and the Stone Storage Room.mp3',
-            '/public/audio/audio files/Luffy vs. Ratchet, Round 2.mp3',
-            '/public/audio/audio files/Karakuri Defense System, Activate!.mp3',
-            '/public/audio/audio files/Karakuri Castle, Transform!.mp3',
-            '/public/audio/audio files/The 3 Towers.mp3',
-            '/public/audio/audio files/Rampage! Zoro and Franky.mp3',
-            '/public/audio/audio files/Straw Hat Pirates, Initiate Counterattack!.mp3',
-            '/public/audio/audio files/Gear Fourth.mp3',
-            '/public/audio/audio files/My Peak.mp3',
-            '/public/audio/audio files/He Who Can Not Forgive, Fight!.mp3',
-            '/public/audio/audio files/One Piece Unlimited Cruise 1 - Title Menu.mp3',
-            '/public/audio/audio files/Cornered.mp3',
-            '/public/audio/audio files/Bad Guy.mp3',
-            '/public/audio/audio files/Resort Island.mp3',
-            '/public/audio/audio files/Baron Omatsuri Appears.mp3',
-            '/public/audio/audio files/Run!.mp3',
-            '/public/audio/audio files/Luffy\'s Pace.mp3',
-            '/public/audio/audio files/The Operation Begins ~The Village is Destroyed~.mp3',
-            '/public/audio/audio files/Desperate Situation.mp3',
-            '/public/audio/audio files/Rubber Bazooka!!.mp3',
-            '/public/audio/audio files/One Piece Odyssey OST - Generic Theme 4.mp3',
-            '/public/audio/audio files/ONE PIECE WORLD SEEKER - Steel City.mp3',
-            '/public/audio/audio files/Giant Stronghold, Launching!!.mp3',
-            '/public/audio/audio files/I\'m Here With You Too.mp3',
-            '/public/audio/audio files/ONE PIECE WORLD SEEKER - Sapphire Island.mp3',
-            '/public/audio/audio files/One Piece Unlimited Cruise 1 - The Thousand Sunny.mp3',
-            '/public/audio/audio files/To the Grand Line!.mp3',
-            '/public/audio/audio files/A Serious Duel!.mp3',
-            '/public/audio/audio files/One Piece Odyssey OST - Usopp Factory.mp3',
-            '/public/audio/audio files/One Piece Odyssey OST - Camp Theme.mp3',
-            '/public/audio/audio files/Luffy.mp3',
-            '/public/audio/audio files/One Piece Pirate Warriors 4 OST - Germa 66.mp3',
-            '/public/audio/audio files/One Piece Pirate Warriors 4 OST- Main Theme.mp3',
-            '/public/audio/audio files/OVER THE TOP (instrumental).mp3',
-            '/public/audio/audio files/One Piece Unlimited Cruise 1 - Cave Isle.mp3',
-            '/public/audio/audio files/ONE PIECE WORLD SEEKER - Decisive Battle.mp3',
-            '/public/audio/audio files/One Piece Dragon Dream Map theme extended.mp3'
+            '/audio/audio files/If You Live.mp3',
+            '/audio/audio files/The Best Oden Shop in the World!.mp3',
+            '/audio/audio files/Luffy\'s Fierce Attack!.mp3',
+            '/audio/audio files/I\'m Going to be the Pirate King!.mp3',
+            '/audio/audio files/Luffy vs. Ratchet, Round 1.mp3',
+            '/audio/audio files/Woonan and the Stone Storage Room.mp3',
+            '/audio/audio files/Luffy vs. Ratchet, Round 2.mp3',
+            '/audio/audio files/Karakuri Defense System, Activate!.mp3',
+            '/audio/audio files/Karakuri Castle, Transform!.mp3',
+            '/audio/audio files/The 3 Towers.mp3',
+            '/audio/audio files/Rampage! Zoro and Franky.mp3',
+            '/audio/audio files/Straw Hat Pirates, Initiate Counterattack!.mp3',
+            '/audio/audio files/Gear Fourth.mp3',
+            '/audio/audio files/My Peak.mp3',
+            '/audio/audio files/He Who Can Not Forgive, Fight!.mp3',
+            '/audio/audio files/One Piece Unlimited Cruise 1 - Title Menu.mp3',
+            '/audio/audio files/Cornered.mp3',
+            '/audio/audio files/Bad Guy.mp3',
+            '/audio/audio files/Resort Island.mp3',
+            '/audio/audio files/Baron Omatsuri Appears.mp3',
+            '/audio/audio files/Run!.mp3',
+            '/audio/audio files/Luffy\'s Pace.mp3',
+            '/audio/audio files/The Operation Begins ~The Village is Destroyed~.mp3',
+            '/audio/audio files/Desperate Situation.mp3',
+            '/audio/audio files/Rubber Bazooka!!.mp3',
+            '/audio/audio files/One Piece Odyssey OST - Generic Theme 4.mp3',
+            '/audio/audio files/ONE PIECE WORLD SEEKER - Steel City.mp3',
+            '/audio/audio files/Giant Stronghold, Launching!!.mp3',
+            '/audio/audio files/I\'m Here With You Too.mp3',
+            '/audio/audio files/ONE PIECE WORLD SEEKER - Sapphire Island.mp3',
+            '/audio/audio files/One Piece Unlimited Cruise 1 - The Thousand Sunny.mp3',
+            '/audio/audio files/To the Grand Line!.mp3',
+            '/audio/audio files/A Serious Duel!.mp3',
+            '/audio/audio files/One Piece Odyssey OST - Usopp Factory.mp3',
+            '/audio/audio files/One Piece Odyssey OST - Camp Theme.mp3',
+            '/audio/audio files/Luffy.mp3',
+            '/audio/audio files/One Piece Pirate Warriors 4 OST - Germa 66.mp3',
+            '/audio/audio files/One Piece Pirate Warriors 4 OST- Main Theme.mp3',
+            '/audio/audio files/OVER THE TOP (instrumental).mp3',
+            '/audio/audio files/One Piece Unlimited Cruise 1 - Cave Isle.mp3',
+            '/audio/audio files/ONE PIECE WORLD SEEKER - Decisive Battle.mp3',
+            '/audio/audio files/One Piece Dragon Dream Map theme extended.mp3'
         ];
         
         // Easter egg tracks mapping
         this.easterEggTracks = {
-            'slushbucket': '/public/audio/easter egg audio/slushbucket.mp3',
-            'xtra3678': '/public/audio/easter egg audio/xtra3678.mp3',
-            'boomdacow': '/public/audio/easter egg audio/boomdacow.mp3'
+            'slushbucket': '/audio/easter egg audio/slushbucket.mp3',
+            'xtra3678': '/audio/easter egg audio/xtra3678.mp3',
+            'boomdacow': '/audio/easter egg audio/boomdacow.mp3'
         };
         
         this.shuffledPlaylist = [];
@@ -116,15 +116,6 @@ export class MusicManager {
     }
 
     /**
-     * Checks if a seed is an easter egg track name
-     * @param {string} seed - The seed to check
-     * @returns {boolean} True if it's an easter egg track
-     */
-    isEasterEggSeed(seed) {
-        return this.easterEggTracks.hasOwnProperty(seed.toLowerCase());
-    }
-
-    /**
      * Checks if a seed is the test seed to show music player
      * @param {string} seed - The seed to check
      * @returns {boolean} True if it's the test seed
@@ -140,6 +131,7 @@ export class MusicManager {
         this.isVisible = true;
         this.createMusicControls();
         console.log('Music player is now visible for testing');
+        alert('Music player is now visible for testing!');
     }
 
     /**
@@ -152,6 +144,15 @@ export class MusicManager {
             controls.remove();
         }
         console.log('Music player is now hidden');
+    }
+
+    /**
+     * Checks if a seed is an easter egg track name
+     * @param {string} seed - The seed to check
+     * @returns {boolean} True if it's an easter egg track
+     */
+    isEasterEggSeed(seed) {
+        return this.easterEggTracks.hasOwnProperty(seed.toLowerCase());
     }
 
     /**
