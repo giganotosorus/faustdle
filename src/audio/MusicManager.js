@@ -11,8 +11,8 @@ export class MusicManager {
         this.audioFiles = [
             '/audio/audio files/If You Live.mp3',
             '/audio/audio files/The Best Oden Shop in the World!.mp3',
-            '/audio/audio files/Luffy\'s Fierce Attack!.mp3',
-            '/audio/audio files/I\'m Going to be the Pirate King!.mp3',
+            '/audio/audio files/Luffys Fierce Attack!.mp3',
+            '/audio/audio files/Im Going to be the Pirate King!.mp3',
             '/audio/audio files/Luffy vs. Ratchet, Round 1.mp3',
             '/audio/audio files/Woonan and the Stone Storage Room.mp3',
             '/audio/audio files/Luffy vs. Ratchet, Round 2.mp3',
@@ -30,14 +30,14 @@ export class MusicManager {
             '/audio/audio files/Resort Island.mp3',
             '/audio/audio files/Baron Omatsuri Appears.mp3',
             '/audio/audio files/Run!.mp3',
-            '/audio/audio files/Luffy\'s Pace.mp3',
+            '/audio/audio files/Luffys Pace.mp3',
             '/audio/audio files/The Operation Begins ~The Village is Destroyed~.mp3',
             '/audio/audio files/Desperate Situation.mp3',
             '/audio/audio files/Rubber Bazooka!!.mp3',
             '/audio/audio files/One Piece Odyssey OST - Generic Theme 4.mp3',
             '/audio/audio files/ONE PIECE WORLD SEEKER - Steel City.mp3',
             '/audio/audio files/Giant Stronghold, Launching!!.mp3',
-            '/audio/audio files/I\'m Here With You Too.mp3',
+            '/audio/audio files/Im Here With You Too.mp3',
             '/audio/audio files/ONE PIECE WORLD SEEKER - Sapphire Island.mp3',
             '/audio/audio files/One Piece Unlimited Cruise 1 - The Thousand Sunny.mp3',
             '/audio/audio files/To the Grand Line!.mp3',
@@ -52,6 +52,14 @@ export class MusicManager {
             '/audio/audio files/ONE PIECE WORLD SEEKER - Decisive Battle.mp3',
             '/audio/audio files/One Piece Dragon Dream Map theme extended.mp3'
         ];
+        
+        // Display names for tracks that have apostrophes removed from file names
+        this.displayNames = {
+            '/audio/audio files/Luffys Fierce Attack!.mp3': "Luffy's Fierce Attack!",
+            '/audio/audio files/Im Going to be the Pirate King!.mp3': "I'm Going to be the Pirate King!",
+            '/audio/audio files/Luffys Pace.mp3': "Luffy's Pace",
+            '/audio/audio files/Im Here With You Too.mp3': "I'm Here With You Too"
+        };
         
         // Easter egg tracks mapping
         this.easterEggTracks = {
@@ -111,6 +119,13 @@ export class MusicManager {
         
         const trackIndex = this.getCurrentTrackIndex();
         const fullPath = this.audioFiles[trackIndex];
+        
+        // Check if this track has a custom display name
+        if (this.displayNames[fullPath]) {
+            return this.displayNames[fullPath];
+        }
+        
+        // Otherwise use the filename without extension
         const filename = fullPath.split('/').pop().replace('.mp3', '');
         return filename;
     }
