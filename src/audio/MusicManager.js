@@ -68,6 +68,7 @@ export class MusicManager {
         this.isEasterEggMode = false; // Track if we're in easter egg mode
         this.currentEasterEggTrack = null; // Current easter egg track
         this.isMinimized = this.getMinimizedPreference();
+        this.isVisible = false; // Start hidden by default
         
         // Initialize shuffled playlist
         this.createShuffledPlaylist();
@@ -124,6 +125,36 @@ export class MusicManager {
     }
 
     /**
+     * Checks if a seed is the test seed to show music player
+     * @param {string} seed - The seed to check
+     * @returns {boolean} True if it's the test seed
+     */
+    isTestSeed(seed) {
+        return seed.toLowerCase() === 'test';
+    }
+
+    /**
+     * Shows the music player (for testing purposes)
+     */
+    showMusicPlayer() {
+        this.isVisible = true;
+        this.createMusicControls();
+        console.log('Music player is now visible for testing');
+    }
+
+    /**
+     * Hides the music player
+     */
+    hideMusicPlayer() {
+        this.isVisible = false;
+        const controls = document.getElementById('music-controls');
+        if (controls) {
+            controls.remove();
+        }
+        console.log('Music player is now hidden');
+    }
+
+    /**
      * Activates easter egg mode with a specific track
      * @param {string} trackName - Name of the easter egg track
      */
@@ -158,8 +189,10 @@ export class MusicManager {
         // Stop current music
         this.stopMusic();
         
-        // Recreate normal UI
-        this.createMusicControls();
+        // Recreate normal UI if visible
+        if (this.isVisible) {
+            this.createMusicControls();
+        }
         
         console.log('Deactivated easter egg mode');
     }
@@ -197,6 +230,9 @@ export class MusicManager {
      * Updates the UI for easter egg mode
      */
     updateEasterEggUI() {
+        // Only create controls if music player is visible
+        if (!this.isVisible) return;
+        
         // Recreate controls with easter egg styling
         this.createMusicControls();
         
@@ -249,17 +285,17 @@ export class MusicManager {
      * Initializes the music system and creates UI controls
      */
     async initialize() {
-        this.createMusicControls();
-        
-        if (this.isEnabled) {
-            this.updateTrackInfo(`🎵 Click Play to start`);
-        }
+        // Don't create controls by default - they're hidden until test seed is used
+        console.log('Music system initialized (hidden)');
     }
 
     /**
      * Creates the music control UI elements
      */
     createMusicControls() {
+        // Don't create controls if not visible
+        if (!this.isVisible) return;
+        
         // Remove existing controls if they exist
         const existingControls = document.getElementById('music-controls');
         if (existingControls) {

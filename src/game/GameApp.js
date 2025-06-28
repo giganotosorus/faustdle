@@ -130,7 +130,7 @@ export default class GameApp {
     async initializeMusic() {
         try {
             await this.musicManager.initialize();
-            console.log('Music system initialized');
+            console.log('Music system initialized (hidden by default)');
         } catch (error) {
             console.warn('Failed to initialize music system:', error);
         }
@@ -835,6 +835,14 @@ export default class GameApp {
         // Check for special seeds first
         if (seedValue.toLowerCase() === 'imu') {
             window.location.reload();
+            return;
+        }
+
+        // Check if it's the test seed to show music player
+        if (this.musicManager.isTestSeed(seedValue)) {
+            this.musicManager.showMusicPlayer();
+            // Clear the seed input
+            seedInput.value = '';
             return;
         }
 
