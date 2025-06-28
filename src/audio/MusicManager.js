@@ -68,6 +68,13 @@ export class MusicManager {
             'boomdacow': '/audio/easter egg audio/boomdacow.mp3'
         };
         
+        // Custom display names for easter egg tracks
+        this.easterEggDisplayNames = {
+            'slushbucket': 'Rosalina\'s Ice World MK8DXBCP',
+            'xtra3678': 'The Amazing Digital Circus Theme',
+            'boomdacow': 'the real shit'
+        };
+        
         this.shuffledPlaylist = [];
         this.playlistIndex = 0;
         this.isEnabled = this.getStoredPreference();
@@ -76,10 +83,27 @@ export class MusicManager {
         this.isEasterEggMode = false; // Track if we're in easter egg mode
         this.currentEasterEggTrack = null; // Current easter egg track
         this.isMinimized = this.getMinimizedPreference();
-        this.isVisible = false; // Start hidden by default
+        this.isVisible = false; // Start hidden by default (for debug mode)
+        this.alwaysPlaying = true; // New: always playing mode
+        this.trackAnnouncementElement = null; // Track announcement UI element
+        this.announcementTimeout = null; // Track announcement timeout
+        this.isFirstSong = true; // Track if this is the first song on startup
+        this.firstSongLoaded = false; // Track if first song has loaded
+        this.firstSongStarted = false; // Track if first song has started playing
+        this.pendingFirstSongAnnouncement = null; // Store first song announcement data
+        this.audioLoadTimeout = null; // Timeout for audio loading
         
         // Initialize shuffled playlist
         this.createShuffledPlaylist();
+        
+        // Load stored volume
+        const storedVolume = localStorage.getItem('faustdle-music-volume');
+        if (storedVolume) {
+            this.volume = parseInt(storedVolume);
+        }
+
+        // Check if volume is 0 (muted)
+        this.isMuted = this.volume === 0;
     }
 
     /**
@@ -114,7 +138,8 @@ export class MusicManager {
      */
     getCurrentTrackName() {
         if (this.isEasterEggMode && this.currentEasterEggTrack) {
-            return `🎵 ${this.currentEasterEggTrack}`;
+            // Return the custom display name for easter egg tracks
+            return this.easterEggDisplayNames[this.currentEasterEggTrack.toLowerCase()] || this.currentEasterEggTrack;
         }
         
         const trackIndex = this.getCurrentTrackIndex();
@@ -131,12 +156,206 @@ export class MusicManager {
     }
 
     /**
+     * Creates the track announcement UI element
+     */
+    createTrackAnnouncementElement() {
+        if (this.trackAnnouncementElement) {
+            this.trackAnnouncementElement.remove();
+        }
+
+        this.trackAnnouncementElement = document.createElement('div');
+        this.trackAnnouncementElement.className = 'track-announcement';
+        
+        // Add special class for easter egg tracks to use gold outline
+        if (this.isEasterEggMode) {
+            this.trackAnnouncementElement.classList.add('easter-egg-track');
+        }
+        
+        document.body.appendChild(this.trackAnnouncementElement);
+        return this.trackAnnouncementElement;
+    }
+
+    /**
+     * Shows track announcement with Deltarune-style animation
+     * Enhanced with multiple fallback strategies for first song
+     */
+    showTrackAnnouncement(trackName) {
+        // Don't show announcement if music is disabled or muted
+        if (!this.isEnabled || this.isMuted) return;
+
+        // Clear any existing announcement timeout
+        if (this.announcementTimeout) {
+            clearTimeout(this.announcementTimeout);
+        }
+
+        // For first song, use multiple strategies to ensure it shows
+        if (this.isFirstSong) {
+            this.showFirstSongAnnouncement(trackName);
+            return;
+        }
+
+        // For subsequent songs, show immediately with 2-second delay
+        this.announcementTimeout = setTimeout(() => {
+            this.displayTrackAnnouncement(trackName);
+        }, 2000);
+    }
+
+    /**
+     * Special handling for first song announcement with multiple fallback strategies
+     */
+    showFirstSongAnnouncement(trackName) {
+        console.log('Setting up first song announcement for:', trackName);
+        
+        // Store the track name for the first song
+        this.pendingFirstSongAnnouncement = trackName;
+        
+        // Strategy 1: Wait for audio to be fully loaded (canplaythrough event)
+        // This is handled in handleAudioReady()
+        
+        // Strategy 2: Fallback timeout - if audio doesn't load within 8 seconds, show anyway
+        if (this.audioLoadTimeout) {
+            clearTimeout(this.audioLoadTimeout);
+        }
+        
+        this.audioLoadTimeout = setTimeout(() => {
+            console.log('Audio load timeout reached, showing first song announcement anyway');
+            if (this.pendingFirstSongAnnouncement && !this.firstSongLoaded) {
+                this.triggerFirstSongAnnouncement();
+            }
+        }, 8000); // 8 second timeout
+        
+        // Strategy 3: If audio starts playing before fully loaded, show announcement
+        // This is handled in playCurrentTrack() when play() succeeds
+    }
+
+    /**
+     * Triggers the first song announcement (called from multiple places for reliability)
+     */
+    triggerFirstSongAnnouncement() {
+        if (!this.pendingFirstSongAnnouncement || this.firstSongLoaded) {
+            return; // Already handled or no pending announcement
+        }
+        
+        console.log('Triggering first song announcement:', this.pendingFirstSongAnnouncement);
+        this.firstSongLoaded = true;
+        
+        // Clear the timeout since we're handling it now
+        if (this.audioLoadTimeout) {
+            clearTimeout(this.audioLoadTimeout);
+            this.audioLoadTimeout = null;
+        }
+        
+        // Show the announcement with 2-second delay
+        this.announcementTimeout = setTimeout(() => {
+            this.displayTrackAnnouncement(this.pendingFirstSongAnnouncement);
+            this.pendingFirstSongAnnouncement = null;
+        }, 2000);
+    }
+
+    /**
+     * Actually displays the track announcement with animation
+     * Fixed to ensure consistent fade-in effect
+     */
+    displayTrackAnnouncement(trackName) {
+        // Double-check mute status right before showing
+        if (!this.isEnabled || this.isMuted) return;
+
+        const announcement = this.createTrackAnnouncementElement();
+        announcement.textContent = `♪ ${trackName} ♪`;
+
+        console.log('Displaying track announcement:', trackName);
+
+        // CRITICAL: Force the element to be rendered in its initial state first
+        // This ensures the CSS transition will work properly
+        announcement.style.right = '-300px'; // Start position (off-screen)
+        announcement.style.opacity = '0'; // Start opacity
+        
+        // Force a reflow to ensure the initial styles are applied
+        announcement.offsetHeight;
+
+        // Use a small delay to ensure the element is fully rendered before starting animation
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                // Phase 1: Slide in from right and fade in (move from -300px to 2rem)
+                announcement.style.right = '2rem';
+                announcement.style.opacity = '1';
+
+                // Phase 2: Stay in position for 5 seconds
+                setTimeout(() => {
+                    // Phase 3: Slide out to left and fade out (move from 2rem to calc(100vw - 2rem))
+                    announcement.style.right = 'calc(100vw - 2rem)';
+                    announcement.style.opacity = '0';
+
+                    // Phase 4: Remove element after animation
+                    setTimeout(() => {
+                        if (announcement && announcement.parentNode) {
+                            announcement.remove();
+                        }
+                    }, 800); // Match transition duration
+                }, 5000); // Stay visible for 5 seconds
+            });
+        });
+    }
+
+    /**
+     * Creates the volume control for the Other menu
+     */
+    createVolumeControl() {
+        // Remove existing volume control if it exists
+        const existingControl = document.getElementById('music-volume-control');
+        if (existingControl) {
+            existingControl.remove();
+        }
+
+        const volumeControl = document.createElement('div');
+        volumeControl.id = 'music-volume-control';
+        volumeControl.className = 'music-volume-control';
+        volumeControl.innerHTML = `
+            <div class="volume-control-row">
+                <span class="volume-label">🎵 Music Volume</span>
+                <input type="range" id="music-volume-slider" class="volume-slider" 
+                       min="0" max="100" value="${this.volume}">
+                <span class="volume-value">${this.volume}%</span>
+            </div>
+        `;
+
+        // Add event listener for volume changes
+        const slider = volumeControl.querySelector('#music-volume-slider');
+        const valueDisplay = volumeControl.querySelector('.volume-value');
+        
+        slider.addEventListener('input', (e) => {
+            const newVolume = parseInt(e.target.value);
+            this.setVolume(newVolume);
+            valueDisplay.textContent = `${newVolume}%`;
+        });
+
+        return volumeControl;
+    }
+
+    /**
+     * Adds volume control to the Other menu
+     */
+    addVolumeControlToOtherMenu() {
+        const otherButtons = document.querySelector('.other-buttons');
+        if (otherButtons) {
+            const volumeControl = this.createVolumeControl();
+            // Insert before the "Back" button
+            const backButton = otherButtons.querySelector('#other-cancel');
+            if (backButton) {
+                otherButtons.insertBefore(volumeControl, backButton);
+            } else {
+                otherButtons.appendChild(volumeControl);
+            }
+        }
+    }
+
+    /**
      * Checks if a seed is the test seed to show music player
      * @param {string} seed - The seed to check
      * @returns {boolean} True if it's the test seed
      */
     isTestSeed(seed) {
-        return seed.toLowerCase() === 'test';
+        return seed.toLowerCase() === 'debugmusic';
     }
 
     /**
@@ -209,6 +428,11 @@ export class MusicManager {
         if (this.isVisible) {
             this.createMusicControls();
         }
+
+        // Resume normal playback if enabled
+        if (this.alwaysPlaying && this.isEnabled) {
+            setTimeout(() => this.playCurrentTrack(), 500);
+        }
         
         console.log('Deactivated easter egg mode');
     }
@@ -225,12 +449,14 @@ export class MusicManager {
             this.currentAudio.src = trackPath;
             this.currentAudio.loop = true; // Loop the easter egg track
             
-            this.updateTrackInfo('Loading easter egg...');
-            
             await this.currentAudio.play();
             this.isPlaying = true;
             
-            // Update play/pause button
+            // Show track announcement - use custom display name
+            const displayName = this.easterEggDisplayNames[this.currentEasterEggTrack.toLowerCase()] || this.currentEasterEggTrack;
+            this.showTrackAnnouncement(displayName);
+            
+            // Update play/pause button if visible
             const playPauseButton = document.getElementById('play-pause');
             if (playPauseButton) {
                 playPauseButton.innerHTML = '⏸️';
@@ -238,7 +464,6 @@ export class MusicManager {
             
         } catch (error) {
             console.error('Failed to play easter egg track:', error);
-            this.updateTrackInfo('Failed to load easter egg');
         }
     }
 
@@ -298,15 +523,25 @@ export class MusicManager {
     }
 
     /**
-     * Initializes the music system and creates UI controls
+     * Initializes the music system and starts playing if enabled
      */
     async initialize() {
-        // Don't create controls by default - they're hidden until test seed is used
-        console.log('Music system initialized (hidden)');
+        console.log('Music system initialized');
+        
+        // Add volume control to Other menu
+        this.addVolumeControlToOtherMenu();
+        
+        // Start playing music if enabled and in always-playing mode
+        if (this.alwaysPlaying && this.isEnabled) {
+            // Small delay to ensure page is loaded
+            setTimeout(() => {
+                this.playCurrentTrack();
+            }, 1000);
+        }
     }
 
     /**
-     * Creates the music control UI elements
+     * Creates the music control UI elements (for debug mode)
      */
     createMusicControls() {
         // Don't create controls if not visible
@@ -408,7 +643,8 @@ export class MusicManager {
             trackInfo.className = 'track-info';
             
             if (this.isEasterEggMode) {
-                trackInfo.textContent = `🎵 Playing: ${this.currentEasterEggTrack}`;
+                const displayName = this.easterEggDisplayNames[this.currentEasterEggTrack.toLowerCase()] || this.currentEasterEggTrack;
+                trackInfo.textContent = `🎵 Playing: ${displayName}`;
             } else {
                 trackInfo.textContent = this.isEnabled ? `🎵 ${this.audioFiles.length} tracks ready` : 'Music disabled';
             }
@@ -455,6 +691,7 @@ export class MusicManager {
             this.currentAudio.pause();
             this.currentAudio.removeEventListener('ended', this.handleTrackEnd.bind(this));
             this.currentAudio.removeEventListener('error', this.handleAudioError.bind(this));
+            this.currentAudio.removeEventListener('canplaythrough', this.handleAudioReady.bind(this));
         }
 
         this.currentAudio = new Audio();
@@ -465,12 +702,14 @@ export class MusicManager {
         // Add event listeners
         this.currentAudio.addEventListener('ended', this.handleTrackEnd.bind(this));
         this.currentAudio.addEventListener('error', this.handleAudioError.bind(this));
+        this.currentAudio.addEventListener('canplaythrough', this.handleAudioReady.bind(this));
         this.currentAudio.addEventListener('loadstart', () => {
             this.updateTrackInfo('Loading...');
         });
         this.currentAudio.addEventListener('canplay', () => {
             if (this.isEasterEggMode) {
-                this.updateTrackInfo(`🎵 Playing: ${this.currentEasterEggTrack}`);
+                const displayName = this.easterEggDisplayNames[this.currentEasterEggTrack.toLowerCase()] || this.currentEasterEggTrack;
+                this.updateTrackInfo(`🎵 Playing: ${displayName}`);
             } else {
                 const trackName = this.getCurrentTrackName();
                 this.updateTrackInfo(`♪ ${trackName.substring(0, 30)}${trackName.length > 30 ? '...' : ''} ♪`);
@@ -481,13 +720,26 @@ export class MusicManager {
     }
 
     /**
+     * Handles when audio is fully loaded and ready to play
+     */
+    handleAudioReady() {
+        console.log('Audio is ready to play');
+        
+        // For first song, trigger announcement now that audio is loaded
+        if (this.isFirstSong && this.pendingFirstSongAnnouncement) {
+            console.log('First song loaded, triggering announcement');
+            this.triggerFirstSongAnnouncement();
+        }
+    }
+
+    /**
      * Handles when a track ends
      */
     handleTrackEnd() {
         if (this.isEasterEggMode) {
             // Easter egg tracks should loop automatically, but just in case
             this.playEasterEggTrack();
-        } else if (this.isLooping) {
+        } else if (this.isLooping && this.alwaysPlaying && this.isEnabled) {
             this.nextTrack();
         } else {
             this.stopMusic();
@@ -509,7 +761,7 @@ export class MusicManager {
         if (this.isEasterEggMode) {
             this.updateTrackInfo('Easter egg error - exiting...');
             setTimeout(() => this.deactivateEasterEggMode(), 2000);
-        } else {
+        } else if (this.alwaysPlaying && this.isEnabled) {
             this.updateTrackInfo('Error - trying next...');
             setTimeout(() => this.nextTrack(), 1000);
         }
@@ -521,12 +773,41 @@ export class MusicManager {
      */
     setVolume(volume) {
         this.volume = Math.max(0, Math.min(100, volume));
+        this.isMuted = this.volume === 0;
         
         if (this.currentAudio) {
             this.currentAudio.volume = this.volume / 100;
         }
         
         localStorage.setItem('faustdle-music-volume', this.volume.toString());
+        
+        // Update volume control in Other menu if it exists
+        const volumeSlider = document.getElementById('music-volume-slider');
+        const volumeValue = document.querySelector('.volume-value');
+        if (volumeSlider) {
+            volumeSlider.value = this.volume;
+        }
+        if (volumeValue) {
+            volumeValue.textContent = `${this.volume}%`;
+        }
+
+        // Clear any pending announcements if muted
+        if (this.isMuted) {
+            this.pendingFirstSongAnnouncement = null;
+            if (this.announcementTimeout) {
+                clearTimeout(this.announcementTimeout);
+                this.announcementTimeout = null;
+            }
+            if (this.audioLoadTimeout) {
+                clearTimeout(this.audioLoadTimeout);
+                this.audioLoadTimeout = null;
+            }
+            // Remove any visible announcement
+            if (this.trackAnnouncementElement) {
+                this.trackAnnouncementElement.remove();
+                this.trackAnnouncementElement = null;
+            }
+        }
     }
 
     /**
@@ -541,7 +822,8 @@ export class MusicManager {
         this.isPlaying = false;
         
         if (this.isEasterEggMode) {
-            this.updateTrackInfo(`🎵 ${this.currentEasterEggTrack} stopped`);
+            const displayName = this.easterEggDisplayNames[this.currentEasterEggTrack.toLowerCase()] || this.currentEasterEggTrack;
+            this.updateTrackInfo(`🎵 ${displayName} stopped`);
         } else {
             this.updateTrackInfo('Stopped');
         }
@@ -551,6 +833,17 @@ export class MusicManager {
         if (playPauseButton) {
             playPauseButton.innerHTML = '▶️';
         }
+
+        // Clear any pending announcements
+        if (this.announcementTimeout) {
+            clearTimeout(this.announcementTimeout);
+            this.announcementTimeout = null;
+        }
+        if (this.audioLoadTimeout) {
+            clearTimeout(this.audioLoadTimeout);
+            this.audioLoadTimeout = null;
+        }
+        this.pendingFirstSongAnnouncement = null;
     }
 
     /**
@@ -580,8 +873,11 @@ export class MusicManager {
             console.log('Reshuffled playlist for continuous playback');
         }
         
-        // If we were playing, start the new track
-        if (this.isPlaying) {
+        // Reset first song flag for subsequent tracks
+        this.isFirstSong = false;
+        
+        // If we were playing or in always-playing mode, start the new track
+        if (this.isPlaying || (this.alwaysPlaying && this.isEnabled)) {
             this.playCurrentTrack();
         } else {
             const trackName = this.getCurrentTrackName();
@@ -598,8 +894,11 @@ export class MusicManager {
         // Move to previous track in shuffled playlist
         this.playlistIndex = (this.playlistIndex - 1 + this.shuffledPlaylist.length) % this.shuffledPlaylist.length;
         
-        // If we were playing, start the new track
-        if (this.isPlaying) {
+        // Reset first song flag for subsequent tracks
+        this.isFirstSong = false;
+        
+        // If we were playing or in always-playing mode, start the new track
+        if (this.isPlaying || (this.alwaysPlaying && this.isEnabled)) {
             this.playCurrentTrack();
         } else {
             const trackName = this.getCurrentTrackName();
@@ -611,6 +910,8 @@ export class MusicManager {
      * Plays the current track from the shuffled playlist
      */
     async playCurrentTrack() {
+        if (!this.isEnabled) return;
+
         if (this.isEasterEggMode) {
             await this.playEasterEggTrack();
             return;
@@ -623,8 +924,19 @@ export class MusicManager {
             
             this.updateTrackInfo('Loading...');
             
+            // Set up announcement
+            const trackName = this.getCurrentTrackName();
+            this.showTrackAnnouncement(trackName);
+            
             await this.currentAudio.play();
             this.isPlaying = true;
+            this.firstSongStarted = true;
+            
+            // For first song, if announcement hasn't been triggered yet, trigger it now
+            if (this.isFirstSong && this.pendingFirstSongAnnouncement && !this.firstSongLoaded) {
+                console.log('First song started playing, triggering announcement');
+                this.triggerFirstSongAnnouncement();
+            }
             
             // Update play/pause button
             const playPauseButton = document.getElementById('play-pause');
@@ -640,7 +952,9 @@ export class MusicManager {
                 error: error.message
             });
             this.updateTrackInfo('Failed - trying next...');
-            setTimeout(() => this.nextTrack(), 1000);
+            if (this.alwaysPlaying && this.isEnabled) {
+                setTimeout(() => this.nextTrack(), 1000);
+            }
         }
     }
 
@@ -658,7 +972,8 @@ export class MusicManager {
                 playPauseButton.innerHTML = '▶️';
                 
                 if (this.isEasterEggMode) {
-                    this.updateTrackInfo(`🎵 ${this.currentEasterEggTrack} paused`);
+                    const displayName = this.easterEggDisplayNames[this.currentEasterEggTrack.toLowerCase()] || this.currentEasterEggTrack;
+                    this.updateTrackInfo(`🎵 ${displayName} paused`);
                 } else {
                     this.updateTrackInfo('Paused');
                 }
@@ -696,6 +1011,7 @@ export class MusicManager {
         if (this.currentAudio) {
             this.currentAudio.removeEventListener('ended', this.handleTrackEnd.bind(this));
             this.currentAudio.removeEventListener('error', this.handleAudioError.bind(this));
+            this.currentAudio.removeEventListener('canplaythrough', this.handleAudioReady.bind(this));
             this.currentAudio = null;
         }
         
@@ -703,6 +1019,25 @@ export class MusicManager {
         const controls = document.getElementById('music-controls');
         if (controls) {
             controls.remove();
+        }
+
+        // Remove track announcement
+        if (this.trackAnnouncementElement) {
+            this.trackAnnouncementElement.remove();
+        }
+
+        // Remove volume control
+        const volumeControl = document.getElementById('music-volume-control');
+        if (volumeControl) {
+            volumeControl.remove();
+        }
+
+        // Clear timeouts
+        if (this.announcementTimeout) {
+            clearTimeout(this.announcementTimeout);
+        }
+        if (this.audioLoadTimeout) {
+            clearTimeout(this.audioLoadTimeout);
         }
     }
 }

@@ -130,7 +130,7 @@ export default class GameApp {
     async initializeMusic() {
         try {
             await this.musicManager.initialize();
-            console.log('Music system initialized (hidden by default)');
+            console.log('Music system initialized with always-playing mode');
         } catch (error) {
             console.warn('Failed to initialize music system:', error);
         }

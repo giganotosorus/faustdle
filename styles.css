@@ -7,7 +7,7 @@
   --success-color: #10b981;
   --error-color: #ef4444;
   --warning-color: #f59e0b;
-  --info-color: #3b82f6;
+  --info-color: #111F90;
   --purple-color: #9333ea;
   --indigo-color: #4f46e5;
   --gray-color: #64748b;
@@ -465,6 +465,91 @@ input::placeholder {
 .btn-music-minimize:hover {
   background: linear-gradient(180deg, #4338ca 0%, #3730a3 100%);
   border-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Track Announcement Styles */
+.track-announcement {
+  position: fixed;
+  top: 20%;
+  right: -300px; /* Start completely off-screen to the right */
+  transform: translateY(-50%);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  z-index: 2000;
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  white-space: nowrap;
+  text-align: center;
+  
+  /* Blue outline effect */
+  text-shadow: 
+    -2px -2px 0 #111F90,
+    2px -2px 0 #111F90,
+    -2px 2px 0 #111F90,
+    2px 2px 0 #111F90,
+    -3px 0 0 #111F90,
+    3px 0 0 #111F90,
+    0 -3px 0 #111F90,
+    0 3px 0 #111F90,
+    -1px -1px 0 #111F90,
+    1px -1px 0 #111F90,
+    -1px 1px 0 #111F90,
+    1px 1px 0 #111F90,
+    0 0 8px rgba(17, 31, 144, 0.5);
+}
+
+/* Gold outline for easter egg tracks */
+.track-announcement.easter-egg-track {
+  text-shadow: 
+    -2px -2px 0 #FFD700,
+    2px -2px 0 #FFD700,
+    -2px 2px 0 #FFD700,
+    2px 2px 0 #FFD700,
+    -3px 0 0 #FFD700,
+    3px 0 0 #FFD700,
+    0 -3px 0 #FFD700,
+    0 3px 0 #FFD700,
+    -1px -1px 0 #FFD700,
+    1px -1px 0 #FFD700,
+    -1px 1px 0 #FFD700,
+    1px 1px 0 #FFD700,
+    0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+/* Music Volume Control in Other Menu */
+.music-volume-control {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--tan-background-transparent);
+  border-radius: var(--border-radius);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: var(--box-shadow);
+}
+
+.volume-control-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.volume-label {
+  font-weight: 600;
+  color: var(--secondary-color);
+  text-shadow: var(--text-shadow-light);
+  min-width: 120px;
+  font-size: 0.9rem;
+}
+
+.volume-value {
+  font-weight: 600;
+  color: var(--secondary-color);
+  text-shadow: var(--text-shadow-light);
+  min-width: 40px;
+  text-align: right;
+  font-size: 0.9rem;
 }
 
 .results {
@@ -1294,7 +1379,7 @@ label {
     text-shadow: var(--text-shadow-light);
 }
 
-/* Music Controls Styles */
+/* Music Controls Styles (Debug Mode) */
 .music-controls {
   position: fixed;
   bottom: 20px;
@@ -1471,6 +1556,30 @@ label {
   
   .auth-text {
     font-size: 0.75rem;
+  }
+
+  .track-announcement {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    top: 15%;
+    /* Responsive text scaling for mobile */
+    font-size: clamp(0.9rem, 4vw, 1.2rem);
+    padding: clamp(0.5rem, 2vw, 1rem) clamp(1rem, 4vw, 2rem);
+    max-width: 90vw;
+    word-wrap: break-word;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .volume-control-row {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .volume-label,
+  .volume-value {
+    min-width: auto;
   }
   
   :root {
