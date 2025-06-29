@@ -75,6 +75,12 @@ export class MusicManager {
             'boomdacow': 'the real shit'
         };
         
+        // Special logo tracks
+        this.specialLogoTracks = {
+            'My Peak': 'gear5faustdle.png',
+            'Gear Fourth': 'gear4faustdle.png'
+        };
+        
         this.shuffledPlaylist = [];
         this.playlistIndex = 0;
         this.isEnabled = this.getStoredPreference();
@@ -92,6 +98,8 @@ export class MusicManager {
         this.firstSongStarted = false; // Track if first song has started playing
         this.pendingFirstSongAnnouncement = null; // Store first song announcement data
         this.audioLoadTimeout = null; // Timeout for audio loading
+        this.currentLogoOverlay = null; // Track current logo overlay element
+        this.logoOverlayTransition = null; // Track current logo overlay transition
         
         // Initialize shuffled playlist
         this.createShuffledPlaylist();
@@ -156,23 +164,145 @@ export class MusicManager {
     }
 
     /**
-     * Creates the track announcement UI element
+     * Handles logo overlay transitions for special tracks
      */
-    createTrackAnnouncementElement() {
-        if (this.trackAnnouncementElement) {
-            this.trackAnnouncementElement.remove();
+    handleLogoTransition(trackName) {
+        const logoElement = document.querySelector('h1 img');
+        if (!logoElement) {
+            console.warn('Logo element not found');
+            return;
         }
 
-        this.trackAnnouncementElement = document.createElement('div');
-        this.trackAnnouncementElement.className = 'track-announcement';
+        // Check if this track requires a special logo
+        const specialLogo = this.specialLogoTracks[trackName];
         
-        // Add special class for easter egg tracks to use gold outline
-        if (this.isEasterEggMode) {
-            this.trackAnnouncementElement.classList.add('easter-egg-track');
+        if (specialLogo) {
+            console.log(`Creating logo overlay for track: ${trackName}`);
+            this.createLogoOverlay(logoElement, specialLogo);
+            this.logoOverlayTransition = trackName;
+        } else if (this.logoOverlayTransition) {
+            // If we were showing a special logo but now playing a normal track, remove overlay
+            console.log('Removing logo overlay');
+            this.removeLogoOverlay();
+            this.logoOverlayTransition = null;
+        }
+    }
+
+    /**
+     * Creates a logo overlay element that sits perfectly on top of the original logo
+     */
+    createLogoOverlay(logoElement, overlayImageSrc) {
+        // Remove any existing overlay first
+        this.removeLogoOverlay();
+
+        // Get the logo container (h1 element)
+        const logoContainer = logoElement.parentElement;
+        if (!logoContainer) {
+            console.warn('Logo container not found');
+            return;
+        }
+
+        // Create overlay element
+        this.currentLogoOverlay = document.createElement('img');
+        this.currentLogoOverlay.src = overlayImageSrc;
+        this.currentLogoOverlay.className = 'logo-overlay';
+        this.currentLogoOverlay.alt = 'Special Logo';
+        
+        // Get the exact position and dimensions of the original logo
+        const logoRect = logoElement.getBoundingClientRect();
+        const containerRect = logoContainer.getBoundingClientRect();
+        
+        // Calculate the exact position relative to the container
+        const relativeTop = logoRect.top - containerRect.top;
+        const relativeLeft = logoRect.left - containerRect.left;
+        
+        // Position overlay exactly over the original logo using the exact computed dimensions
+        this.currentLogoOverlay.style.position = 'absolute';
+        this.currentLogoOverlay.style.top = relativeTop + 'px';
+        this.currentLogoOverlay.style.left = relativeLeft + 'px';
+        this.currentLogoOverlay.style.width = logoRect.width + 'px';
+        this.currentLogoOverlay.style.height = logoRect.height + 'px';
+        
+        // Ensure perfect visual matching
+        this.currentLogoOverlay.style.objectFit = 'contain';
+        this.currentLogoOverlay.style.display = 'block';
+        this.currentLogoOverlay.style.opacity = '0';
+        this.currentLogoOverlay.style.transition = 'opacity 0.5s ease-in-out';
+        this.currentLogoOverlay.style.zIndex = '10';
+        this.currentLogoOverlay.style.pointerEvents = 'none'; // Allow clicks to pass through
+        
+        // Ensure the logo container has relative positioning for absolute positioning to work
+        const containerStyle = getComputedStyle(logoContainer);
+        if (containerStyle.position === 'static') {
+            logoContainer.style.position = 'relative';
         }
         
-        document.body.appendChild(this.trackAnnouncementElement);
-        return this.trackAnnouncementElement;
+        // Add overlay to the logo container
+        logoContainer.appendChild(this.currentLogoOverlay);
+        
+        // Handle window resize to keep overlay aligned
+        this.resizeHandler = () => {
+            if (this.currentLogoOverlay && logoElement) {
+                const newLogoRect = logoElement.getBoundingClientRect();
+                const newContainerRect = logoContainer.getBoundingClientRect();
+                const newRelativeTop = newLogoRect.top - newContainerRect.top;
+                const newRelativeLeft = newLogoRect.left - newContainerRect.left;
+                
+                this.currentLogoOverlay.style.top = newRelativeTop + 'px';
+                this.currentLogoOverlay.style.left = newRelativeLeft + 'px';
+                this.currentLogoOverlay.style.width = newLogoRect.width + 'px';
+                this.currentLogoOverlay.style.height = newLogoRect.height + 'px';
+            }
+        };
+        
+        window.addEventListener('resize', this.resizeHandler);
+        
+        // Force a reflow to ensure the element is rendered before starting animation
+        this.currentLogoOverlay.offsetHeight;
+        
+        // Fade in the overlay
+        requestAnimationFrame(() => {
+            if (this.currentLogoOverlay) {
+                this.currentLogoOverlay.style.opacity = '1';
+            }
+        });
+    }
+
+    /**
+     * Removes the current logo overlay with fade out effect
+     */
+    removeLogoOverlay() {
+        if (this.currentLogoOverlay) {
+            console.log('Fading out logo overlay');
+            
+            // Remove resize handler
+            if (this.resizeHandler) {
+                window.removeEventListener('resize', this.resizeHandler);
+                this.resizeHandler = null;
+            }
+            
+            // Fade out the overlay
+            this.currentLogoOverlay.style.opacity = '0';
+            
+            // Remove the element after fade out completes
+            setTimeout(() => {
+                if (this.currentLogoOverlay && this.currentLogoOverlay.parentNode) {
+                    this.currentLogoOverlay.parentNode.removeChild(this.currentLogoOverlay);
+                }
+                this.currentLogoOverlay = null;
+            }, 500); // Match transition duration
+        }
+    }
+
+    /**
+     * Removes logo overlay when special track ends
+     */
+    revertLogoToOriginal() {
+        if (this.logoOverlayTransition) {
+            console.log('Reverting logo overlay after special track ended');
+            this.removeLogoOverlay();
+            this.logoOverlayTransition = null;
+        }
     }
 
     /**
@@ -295,6 +425,26 @@ export class MusicManager {
                 }, 5000); // Stay visible for 5 seconds
             });
         });
+    }
+
+    /**
+     * Creates the track announcement UI element
+     */
+    createTrackAnnouncementElement() {
+        if (this.trackAnnouncementElement) {
+            this.trackAnnouncementElement.remove();
+        }
+
+        this.trackAnnouncementElement = document.createElement('div');
+        this.trackAnnouncementElement.className = 'track-announcement';
+        
+        // Add special class for easter egg tracks to use gold outline
+        if (this.isEasterEggMode) {
+            this.trackAnnouncementElement.classList.add('easter-egg-track');
+        }
+        
+        document.body.appendChild(this.trackAnnouncementElement);
+        return this.trackAnnouncementElement;
     }
 
     /**
@@ -736,6 +886,9 @@ export class MusicManager {
      * Handles when a track ends
      */
     handleTrackEnd() {
+        // Revert logo when special track ends
+        this.revertLogoToOriginal();
+        
         if (this.isEasterEggMode) {
             // Easter egg tracks should loop automatically, but just in case
             this.playEasterEggTrack();
@@ -757,6 +910,9 @@ export class MusicManager {
             networkState: event.target?.networkState,
             readyState: event.target?.readyState
         });
+        
+        // Revert logo on error
+        this.revertLogoToOriginal();
         
         if (this.isEasterEggMode) {
             this.updateTrackInfo('Easter egg error - exiting...');
@@ -821,6 +977,9 @@ export class MusicManager {
         
         this.isPlaying = false;
         
+        // Revert logo when music stops
+        this.revertLogoToOriginal();
+        
         if (this.isEasterEggMode) {
             const displayName = this.easterEggDisplayNames[this.currentEasterEggTrack.toLowerCase()] || this.currentEasterEggTrack;
             this.updateTrackInfo(`🎵 ${displayName} stopped`);
@@ -864,6 +1023,9 @@ export class MusicManager {
     nextTrack() {
         if (this.isEasterEggMode) return;
         
+        // Revert logo before changing tracks
+        this.revertLogoToOriginal();
+        
         // Move to next track in shuffled playlist
         this.playlistIndex = (this.playlistIndex + 1) % this.shuffledPlaylist.length;
         
@@ -890,6 +1052,9 @@ export class MusicManager {
      */
     previousTrack() {
         if (this.isEasterEggMode) return;
+        
+        // Revert logo before changing tracks
+        this.revertLogoToOriginal();
         
         // Move to previous track in shuffled playlist
         this.playlistIndex = (this.playlistIndex - 1 + this.shuffledPlaylist.length) % this.shuffledPlaylist.length;
@@ -924,9 +1089,10 @@ export class MusicManager {
             
             this.updateTrackInfo('Loading...');
             
-            // Set up announcement
+            // Set up announcement and logo transition
             const trackName = this.getCurrentTrackName();
             this.showTrackAnnouncement(trackName);
+            this.handleLogoTransition(trackName);
             
             await this.currentAudio.play();
             this.isPlaying = true;
@@ -992,6 +1158,8 @@ export class MusicManager {
                         playPauseButton.innerHTML = '⏸️';
                         const trackName = this.getCurrentTrackName();
                         this.updateTrackInfo(`♪ ${trackName.substring(0, 30)}${trackName.length > 30 ? '...' : ''} ♪`);
+                        // Handle logo transition for resumed track
+                        this.handleLogoTransition(trackName);
                     }
                 }
             }
@@ -1039,5 +1207,8 @@ export class MusicManager {
         if (this.audioLoadTimeout) {
             clearTimeout(this.audioLoadTimeout);
         }
+        
+        // Remove logo overlay
+        this.removeLogoOverlay();
     }
 }

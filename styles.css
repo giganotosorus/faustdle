@@ -61,6 +61,7 @@ h1 {
   font-weight: 600;
   line-height: 1.2;
   text-shadow: var(--text-shadow-strong);
+  position: relative; /* Ensure relative positioning for logo overlay */
 }
 
 h1 img {
