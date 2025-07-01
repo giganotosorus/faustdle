@@ -26,6 +26,8 @@ export default class GameApp {
         this.startTime = null;
         this.elapsedTimeInterval = null;
         this.streakCount = 0;
+        this.streakPoints = 0; // New: track total points in streak mode
+        this.currentRoundPoints = 0; // New: track points for current round
         this.isStreakMode = false;
         this.selectedStreakMode = 'normal';
         this.previousWinner = null;
@@ -256,15 +258,63 @@ export default class GameApp {
             const today = new Date().toISOString().split('T')[0];
             const cacheData = {
                 date: today,
-                completed: data.completed,
+                completed: data.completed || false,
                 character: data.character,
-                guessHistory: data.guessHistory,
-                completionTime: data.completionTime
+                guessHistory: data.guessHistory || [],
+                completionTime: data.completionTime || null,
+                startTime: data.startTime || null,
+                inProgress: data.inProgress || false
             };
             localStorage.setItem('dailyChallenge', JSON.stringify(cacheData));
+            console.log('Daily challenge cache saved:', cacheData);
         } catch (error) {
             console.error('Error saving daily challenge cache:', error);
         }
+    }
+
+    loadDailyProgress() {
+        const cache = this.getDailyChallengeCache();
+        if (!cache) return false;
+
+        // If already completed, don't load progress
+        if (cache.completed) return false;
+
+        // If there's progress but not completed, restore the game state
+        if (cache.inProgress && cache.character) {
+            console.log('Loading daily progress from cache:', cache);
+            
+            // Restore game state
+            this.gameMode = 'daily';
+            window.gameMode = 'daily';
+            this.currentSeed = this.getDailySeed();
+            this.chosenCharacter = {
+                name: cache.character.name,
+                traits: cache.character.traits
+            };
+            this.guessHistory = cache.guessHistory || [];
+            
+            // Restore timer if there was a start time
+            if (cache.startTime) {
+                this.timer.startTime = cache.startTime;
+                this.timer.startTimer();
+            }
+
+            // Show game UI
+            document.getElementById('game-setup').classList.add('hidden');
+            document.getElementById('game-play').classList.remove('hidden');
+            document.getElementById('skip-button').style.display = 'none';
+
+            // Restore previous guesses to the UI
+            if (this.guessHistory.length > 0) {
+                this.guessHistory.forEach(guess => {
+                    this.results.displayResults(guess.name, guess.results);
+                });
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     showStreakModeDialog() {
@@ -291,6 +341,29 @@ export default class GameApp {
             });
         }
         dialog.classList.remove('hidden');
+    }
+
+    /**
+     * Get maximum guesses allowed for a given mode
+     */
+    getMaxGuessesForMode(mode) {
+        switch (mode) {
+            case 'normal':
+                return 6;
+            case 'hard':
+            case 'filler':
+                return 8;
+            default:
+                return 6;
+        }
+    }
+
+    /**
+     * Calculate points for current round based on guesses used
+     */
+    calculateRoundPoints(guessCount, mode) {
+        const maxGuesses = this.getMaxGuessesForMode(mode);
+        return Math.max(0, maxGuesses - guessCount);
     }
 
     setupEventListeners() {
@@ -491,6 +564,8 @@ export default class GameApp {
     startStreakMode() {
         this.isStreakMode = true;
         this.streakCount = 0;
+        this.streakPoints = 0; // Reset total points
+        this.currentRoundPoints = 0; // Reset round points
         this.ui.toggleStreakModeUI(true);
         this.startGame(this.selectedStreakMode);
     }
@@ -548,12 +623,23 @@ export default class GameApp {
         this.results.displayResults(exactName, results);
         this.guessHistory.push({ name: exactName, results });
         
+        // Save progress for daily mode after each guess
+        if (this.gameMode === 'daily') {
+            this.saveDailyChallengeCache({
+                character: this.chosenCharacter,
+                guessHistory: this.guessHistory,
+                startTime: this.timer.startTime,
+                inProgress: true,
+                completed: false
+            });
+        }
+        
         // Update Discord presence with new guess
         this.discord.addGuess({ name: exactName, results });
         
         const isCorrectGuess = exactName === this.chosenCharacter.name;
         
-        const maxGuesses = this.gameMode === 'normal' ? 6 : 8;
+        const maxGuesses = this.getMaxGuessesForMode(this.gameMode);
         if (this.isStreakMode && this.guessHistory.length >= maxGuesses && !isCorrectGuess) {
             this.handleStreakLoss();
             return;
@@ -574,6 +660,11 @@ export default class GameApp {
         }
 
         if (isCorrectGuess) {
+            // Calculate points for this round if in streak mode
+            if (this.isStreakMode) {
+                this.currentRoundPoints = this.calculateRoundPoints(this.guessHistory.length, this.gameMode);
+                this.streakPoints += this.currentRoundPoints;
+            }
             this.handleCorrectGuess();
         }
         
@@ -647,6 +738,15 @@ export default class GameApp {
             const dailyNumber = this.ui.getDailyChallengeNumber();
             const completionTime = this.timer.getElapsedTime();
             
+            // Save completion to cache
+            this.saveDailyChallengeCache({
+                completed: true,
+                character: this.chosenCharacter,
+                guessHistory: this.guessHistory,
+                completionTime: completionTime,
+                inProgress: false
+            });
+            
             try {
                 // Use authenticated call if possible, fallback to RPC
                 if (this.isDiscordAuthenticated) {
@@ -682,13 +782,6 @@ export default class GameApp {
                 if (this.currentDailyCount) {
                     this.ui.updateDailyPlayerCount(this.currentDailyCount);
                 }
-
-                this.saveDailyChallengeCache({
-                    completed: true,
-                    character: this.chosenCharacter.name,
-                    guessHistory: this.guessHistory,
-                    completionTime: completionTime
-                });
             } catch (error) {
                 console.error('Error updating daily player count:', error);
                 this.ui.showGameOver(
@@ -707,7 +800,10 @@ export default class GameApp {
                 this.chosenCharacter.name,
                 this.currentSeed,
                 true,
-                this.streakCount
+                this.streakCount,
+                null,
+                this.currentRoundPoints, // Pass round points
+                this.streakPoints // Pass total points
             );
         } else {
             this.ui.showGameOver(
@@ -724,22 +820,29 @@ export default class GameApp {
     handleStreakLoss() {
         this.timer.stopTimer();
         const finalStreak = this.streakCount;
+        const finalPoints = this.streakPoints;
+        
         this.ui.showGameOver(
             `Game Over! Your streak ends at ${finalStreak}!`,
             this.chosenCharacter.name,
             this.currentSeed,
             true,
-            finalStreak
+            finalStreak,
+            null,
+            0, // No round points for loss
+            finalPoints // Final total points
         );
         document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
         this.results.copyResultsTable();
 
         if (finalStreak > 0) {
-            this.leaderboardManager.showNamePrompt(finalStreak, this.selectedStreakMode);
+            this.leaderboardManager.showNamePrompt(finalStreak, this.selectedStreakMode, finalPoints);
         }
 
         this.isStreakMode = false;
         this.streakCount = 0;
+        this.streakPoints = 0;
+        this.currentRoundPoints = 0;
         this.previousWinner = null;
     }
 
@@ -757,9 +860,12 @@ export default class GameApp {
         
         if (this.isStreakMode) {
             const currentStreak = this.streakCount;
+            const currentPoints = this.streakPoints;
             document.getElementById('game-setup').classList.add('hidden');
             this.startGame(this.selectedStreakMode);
             this.streakCount = currentStreak;
+            this.streakPoints = currentPoints;
+            this.currentRoundPoints = 0; // Reset round points for new round
             // Update Discord presence for streak mode
             this.discord.updateStreakActivity(this.selectedStreakMode, this.streakCount);
         } else {
@@ -767,6 +873,8 @@ export default class GameApp {
             this.currentSeed = null;
             this.gameMode = null;
             this.streakCount = 0;
+            this.streakPoints = 0;
+            this.currentRoundPoints = 0;
             this.isStreakMode = false;
             this.previousWinner = null;
             this.ui.toggleStreakModeUI(false);
@@ -876,6 +984,13 @@ export default class GameApp {
     }
 
     async startDailyGame() {
+        // First, try to load any existing progress
+        if (this.loadDailyProgress()) {
+            console.log('Loaded daily progress from cache');
+            return;
+        }
+
+        // Check for completed daily challenge
         const cache = this.getDailyChallengeCache();
         if (cache?.completed) {
             this.gameMode = 'daily';
@@ -885,7 +1000,7 @@ export default class GameApp {
             
             this.ui.showGameOver(
                 `You've already completed today's challenge!`,
-                cache.character,
+                cache.character.name,
                 null,
                 false,
                 0,
@@ -915,6 +1030,7 @@ export default class GameApp {
             return;
         }
 
+        // Start new daily game
         this.gameMode = 'daily';
         window.gameMode = 'daily';
         this.currentSeed = this.getDailySeed();
@@ -925,6 +1041,15 @@ export default class GameApp {
         try {
             this.chosenCharacter = this.characterSelector.selectRandomCharacter('normal', this.currentSeed);
             this.timer.startTimer();
+
+            // Save initial progress
+            this.saveDailyChallengeCache({
+                character: this.chosenCharacter,
+                guessHistory: [],
+                startTime: this.timer.startTime,
+                inProgress: true,
+                completed: false
+            });
 
             const today = new Date().toISOString().split('T')[0];
             const { data } = await this.supabase

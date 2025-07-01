@@ -36,6 +36,7 @@ export class LeaderboardManager {
                                 <th>Rank</th>
                                 <th>Player</th>
                                 <th>Streak</th>
+                                <th>Points</th>
                                 <th>Date</th>
                             </tr>
                         </thead>
@@ -111,12 +112,13 @@ export class LeaderboardManager {
                 .select('id', { count: 'exact', head: true })
                 .eq('mode', mode);
 
-            // Then get paginated data
+            // Then get paginated data, ordered by streak first, then points
             const { data: entries, error } = await this.supabase
                 .from('leaderboard_entries')
                 .select('*')
                 .eq('mode', mode)
                 .order('streak', { ascending: false })
+                .order('points', { ascending: false, nullsLast: true })
                 .range(this.currentPage * this.entriesPerPage, 
                        (this.currentPage + 1) * this.entriesPerPage - 1);
 
@@ -136,13 +138,14 @@ export class LeaderboardManager {
                     <td>${rank}</td>
                     <td>${entry.player_name}</td>
                     <td>${entry.streak}</td>
+                    <td>${entry.points !== null ? entry.points : 'N/A'}</td>
                     <td>${new Date(entry.created_at).toLocaleDateString()}</td>
                 `;
                 tbody.appendChild(row);
             });
         } catch (error) {
             console.error('Error loading leaderboard:', error);
-            tbody.innerHTML = '<tr><td colspan="4">Error loading leaderboard</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5">Error loading leaderboard</td></tr>';
         }
     }
 
@@ -151,17 +154,25 @@ export class LeaderboardManager {
      * @param {string} playerName - Name of the player
      * @param {number} streak - Player's streak count
      * @param {string} mode - Game mode the streak was achieved in
+     * @param {number} points - Player's total points (optional)
      * @returns {Promise<boolean>} Success status of the save operation
      */
-    async saveScore(playerName, streak, mode) {
+    async saveScore(playerName, streak, mode, points = null) {
         try {
+            const entry = {
+                player_name: playerName,
+                streak: streak,
+                mode: mode
+            };
+            
+            // Only add points if provided
+            if (points !== null) {
+                entry.points = points;
+            }
+            
             const { error } = await this.supabase
                 .from('leaderboard_entries')
-                .insert([{
-                    player_name: playerName,
-                    streak: streak,
-                    mode: mode
-                }]);
+                .insert([entry]);
 
             if (error) throw error;
             return true;
@@ -175,14 +186,22 @@ export class LeaderboardManager {
      * Displays a prompt for the player to enter their name when saving a score.
      * @param {number} streak - Player's streak to save
      * @param {string} mode - Game mode the streak was achieved in
+     * @param {number} points - Player's total points (optional)
      */
-    showNamePrompt(streak, mode) {
+    showNamePrompt(streak, mode, points = null) {
         const dialog = document.createElement('div');
         dialog.className = 'name-prompt-dialog';
+        
+        let pointsText = '';
+        if (points !== null) {
+            pointsText = `<p>Your points: ${points}</p>`;
+        }
+        
         dialog.innerHTML = `
             <div class="name-prompt-content">
                 <h3>Save Your Score</h3>
                 <p>Your streak: ${streak}</p>
+                ${pointsText}
                 <input type="text" id="player-name-input" placeholder="Enter your name" maxlength="20">
                 <div class="button-group">
                     <button class="btn save-score">Save</button>
@@ -198,7 +217,7 @@ export class LeaderboardManager {
             const name = nameInput.value.trim();
             
             if (name) {
-                const success = await this.saveScore(name, streak, mode);
+                const success = await this.saveScore(name, streak, mode, points);
                 if (success) {
                     alert('Score saved successfully!');
                 } else {

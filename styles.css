@@ -807,6 +807,39 @@ td:not(:last-child) {
   box-shadow: var(--box-shadow);
 }
 
+/* Points Display Styles */
+.points-display {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.round-points {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--success-color);
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background: var(--tan-background-transparent);
+  border-radius: var(--border-radius);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: var(--box-shadow);
+  text-shadow: var(--text-shadow);
+  animation: fadeIn 0.3s ease-in;
+}
+
+.total-points {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  padding: 0.5rem;
+  background: var(--tan-background-transparent);
+  border-radius: var(--border-radius);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: var(--box-shadow);
+  text-shadow: var(--text-shadow);
+  animation: fadeIn 0.3s ease-in;
+}
+
 /* Authentication Status Indicator */
 .auth-indicator {
   position: absolute;

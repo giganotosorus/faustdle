@@ -83,7 +83,7 @@ export class UIManager {
         }
     }
 
-    showGameOver(message, character, seed, isStreak = false, streakCount = 0, completionTime = null) {
+    showGameOver(message, character, seed, isStreak = false, streakCount = 0, completionTime = null, roundPoints = null, totalPoints = null) {
         const gamePlay = document.getElementById('game-play');
         const gameOver = document.getElementById('game-over');
         const gameOverMessage = document.getElementById('game-over-message');
@@ -133,6 +133,7 @@ export class UIManager {
         this.removeStreakCounter();
         this.removeDailyElements();
         this.removeShareButtons();
+        this.removePointsDisplay();
         
         // Handle seed container visibility
         if (seedContainer && gameSeed) {
@@ -146,12 +147,48 @@ export class UIManager {
         
         if (isStreak) {
             this.addStreakCounter(streakCount);
+            if (roundPoints !== null || totalPoints !== null) {
+                this.addPointsDisplay(roundPoints, totalPoints);
+            }
             this.addCopyButton('streak');
         } else if (gameMode === 'daily') {
             this.addDailyTitle();
             this.addShareButtons();
         } else {
             this.addCopyButton('normal');
+        }
+    }
+
+    addPointsDisplay(roundPoints, totalPoints) {
+        this.removePointsDisplay(); // Remove any existing points display first
+        
+        const pointsContainer = document.createElement('div');
+        pointsContainer.className = 'points-display';
+        
+        if (roundPoints !== null && roundPoints > 0) {
+            const roundPointsElement = document.createElement('div');
+            roundPointsElement.className = 'round-points';
+            roundPointsElement.textContent = `Round Points: +${roundPoints}`;
+            pointsContainer.appendChild(roundPointsElement);
+        }
+        
+        if (totalPoints !== null) {
+            const totalPointsElement = document.createElement('div');
+            totalPointsElement.className = 'total-points';
+            totalPointsElement.textContent = `Total Points: ${totalPoints}`;
+            pointsContainer.appendChild(totalPointsElement);
+        }
+        
+        const streakCounter = document.querySelector('.streak-count');
+        if (streakCounter && streakCounter.parentNode) {
+            streakCounter.parentNode.insertBefore(pointsContainer, streakCounter.nextSibling);
+        }
+    }
+
+    removePointsDisplay() {
+        const existingPoints = document.querySelector('.points-display');
+        if (existingPoints) {
+            existingPoints.remove();
         }
     }
 
@@ -220,7 +257,8 @@ export class UIManager {
                 break;
             case 'streak':
                 const streakCount = document.querySelector('.streak-count')?.textContent.match(/\d+/)[0] || '0';
-                text = `Found ${this.currentCharacter}\nStreak: ${streakCount}\nTime: ${finalTime}\n\n${emojiGrid}\n\nhttps://faustdle.com`;
+                const totalPoints = document.querySelector('.total-points')?.textContent.match(/\d+/)[0] || '0';
+                text = `Found ${this.currentCharacter}\nStreak: ${streakCount} | Points: ${totalPoints}\nTime: ${finalTime}\n\n${emojiGrid}\n\nhttps://faustdle.com`;
                 break;
             default:
                 text = `Found ${this.currentCharacter}\nTime: ${finalTime}\n\n${emojiGrid}\n\nhttps://faustdle.com`;
