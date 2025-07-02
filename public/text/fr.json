@@ -1,0 +1,26 @@
+{
+    "result_table": {
+        "name": "Nom",
+        "gender": "Genre",
+        "affiliation": "Affiliation",
+        "devilFruit": "Fruit du Démon",
+        "haki": "Haki",
+        "bounty": "Prime",
+        "height": "Taille",
+        "origin": "Origine",
+        "status": "Statut",
+        "occupation": "Occupation"
+    },
+
+    "hakiType": {
+        "haki0": "Aucun haki",
+        "haki1": "Uniquement le haki de l'observation",
+        "haki2": "Uniquement le haki de l'armement",
+        "haki3": "Haki de l'observation et de l'armement",
+        "haki4": "Haki des rois, de l'observation et de l'armement",
+        "haki5": "Uniquement le haki des rois",
+        "haki6": "Haki des rois et de l'observation",
+        "haki7": "Haki des rois et de l'armement",
+        "haki8": "Maîtrise du haki inconnue"
+    }
+}

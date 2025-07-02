@@ -13,6 +13,7 @@ import { MusicManager } from '../audio/MusicManager.js';
 import { DiscordProxy } from '../utils/DiscordProxy.js';
 import seedrandom from 'seedrandom';
 import { createClient } from '@supabase/supabase-js';
+import { loadText, getText } from '../text/text.js';
 
 // Make seedrandom available globally
 window.Math.seedrandom = seedrandom;
@@ -34,7 +35,8 @@ export default class GameApp {
         this.isDiscordAuthenticated = false;
         this.discordProxy = null;
         this.originalSupabase = null;
-        
+
+        loadText("fr");
         this.initializeSupabase();
         this.autocomplete = new AutocompleteManager();
         this.characterSelector = new CharacterSelector();
@@ -45,27 +47,27 @@ export default class GameApp {
         this.leaderboardManager.createLeaderboardDialog();
         this.discord = new DiscordManager();
         this.musicManager = new MusicManager();
-        
+
         // Initialize Discord with Supabase
         this.discord.initialize(this.supabase).then(() => {
             // Set up Discord proxy if we're in Discord
             if (this.discord.sdk) {
                 this.discordProxy = new DiscordProxy(this.discord.sdk);
                 console.log('Discord proxy status:', this.discordProxy.getProxyStatus());
-                
+
                 // Update Supabase client to use proxy
                 this.setupSupabaseProxy();
             }
         }).catch(console.error);
-        
+
         // Listen for Discord auth changes
         document.addEventListener('discord-auth-change', (event) => {
             this.handleDiscordAuthChange(event.detail);
         });
-        
+
         // Check for OAuth callback on page load
         this.handleOAuthCallback();
-        
+
         document.addEventListener('death_link_triggered', (event) => {
             this.handleDeathLink(`Death Link from ${event.detail.source}`);
         });
@@ -107,14 +109,14 @@ export default class GameApp {
                 fetch: async (url, options) => {
                     try {
                         console.log('Intercepting Supabase request:', url);
-                        
+
                         // Use Discord proxy for all requests
                         const response = await this.discordProxy.fetch(url, options);
                         console.log('Proxied request successful:', response.status);
                         return response;
                     } catch (error) {
                         console.error('Proxied request failed:', error);
-                        
+
                         // In Discord environment, don't fallback to direct fetch as it will fail due to CSP
                         throw new Error(`Discord proxy request failed: ${error.message}`);
                     }
@@ -166,20 +168,20 @@ export default class GameApp {
             // Check if we have OAuth parameters in the URL
             const urlParams = new URLSearchParams(window.location.search);
             const fragment = new URLSearchParams(window.location.hash.substring(1));
-            
+
             if (urlParams.has('code') || fragment.has('access_token')) {
                 console.log('OAuth callback detected');
-                
+
                 // Let Supabase handle the OAuth callback
                 const { data, error } = await this.supabase.auth.getSessionFromUrl();
-                
+
                 if (error) {
                     console.error('OAuth callback error:', error);
                 } else if (data.session) {
                     console.log('OAuth callback successful');
                     this.isDiscordAuthenticated = true;
                     this.updateAuthenticationUI();
-                    
+
                     // Clean up URL
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
@@ -192,7 +194,7 @@ export default class GameApp {
     handleDiscordAuthChange(detail) {
         const { event, session, user } = detail;
         this.isDiscordAuthenticated = !!session;
-        
+
         console.log('Discord auth state changed:', event, {
             authenticated: this.isDiscordAuthenticated,
             user: user?.id
@@ -216,7 +218,7 @@ export default class GameApp {
             const discordAuth = this.discord.getAuth();
             const discordUser = discordAuth?.getDiscordUserInfo();
             const username = discordUser?.username || discordUser?.global_name || 'Discord User';
-            
+
             authIndicator.innerHTML = `
                 <div class="auth-status authenticated">
                     <span class="auth-icon">✅</span>
@@ -236,15 +238,15 @@ export default class GameApp {
     getDailyChallengeCache() {
         const cache = localStorage.getItem('dailyChallenge');
         if (!cache) return null;
-        
+
         try {
             const data = JSON.parse(cache);
             const today = new Date().toISOString().split('T')[0];
-            
+
             if (data.date === today) {
                 return data;
             }
-            
+
             localStorage.removeItem('dailyChallenge');
             return null;
         } catch (error) {
@@ -282,7 +284,7 @@ export default class GameApp {
         // If there's progress but not completed, restore the game state
         if (cache.inProgress && cache.character) {
             console.log('Loading daily progress from cache:', cache);
-            
+
             // Restore game state
             this.gameMode = 'daily';
             window.gameMode = 'daily';
@@ -292,7 +294,7 @@ export default class GameApp {
                 traits: cache.character.traits
             };
             this.guessHistory = cache.guessHistory || [];
-            
+
             // Restore timer if there was a start time
             if (cache.startTime) {
                 this.timer.startTime = cache.startTime;
@@ -522,7 +524,7 @@ export default class GameApp {
         document.addEventListener('ap-connect-request', async (event) => {
             const { address, port, slot, password, deathLink } = event.detail;
             const success = await apClient.connect(address, port, slot, password, deathLink);
-            
+
             if (success) {
                 alert('Connected to Archipelago!');
                 this.updateGameModesVisibility(true);
@@ -576,20 +578,20 @@ export default class GameApp {
         this.currentSeed = Math.random().toString(36).substring(2, 15);
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
-        
+
         // Only show skip button if not in daily mode
         const skipButton = document.getElementById('skip-button');
         if (skipButton) {
             skipButton.style.display = mode === 'daily' ? 'none' : 'block';
         }
-        
+
         try {
             this.chosenCharacter = this.characterSelector.selectRandomCharacter(mode, this.currentSeed);
             this.timer.startTimer();
-            
+
             // Update Discord presence
             this.discord.updateGameActivity(mode, 0);
-            
+
             if (apClient.isConnected()) {
                 apClient.setGameMode(mode);
             }
@@ -612,17 +614,17 @@ export default class GameApp {
     makeGuess() {
         const guessInput = document.getElementById('guess-input');
         const guessValue = guessInput.value;
-        
+
         const exactName = this.characterSelector.findCharacterName(guessValue);
         if (!exactName) {
             alert('Invalid name, try again.');
             return;
         }
-        
+
         const results = compareTraits(names[exactName], this.chosenCharacter.traits);
         this.results.displayResults(exactName, results);
         this.guessHistory.push({ name: exactName, results });
-        
+
         // Save progress for daily mode after each guess
         if (this.gameMode === 'daily') {
             this.saveDailyChallengeCache({
@@ -633,18 +635,18 @@ export default class GameApp {
                 completed: false
             });
         }
-        
+
         // Update Discord presence with new guess
         this.discord.addGuess({ name: exactName, results });
-        
+
         const isCorrectGuess = exactName === this.chosenCharacter.name;
-        
+
         const maxGuesses = this.getMaxGuessesForMode(this.gameMode);
         if (this.isStreakMode && this.guessHistory.length >= maxGuesses && !isCorrectGuess) {
             this.handleStreakLoss();
             return;
         }
-        
+
         if (apClient.isConnected()) {
             apClient.submitGuess(exactName, {
                 correct: isCorrectGuess,
@@ -667,15 +669,15 @@ export default class GameApp {
             }
             this.handleCorrectGuess();
         }
-        
+
         guessInput.value = '';
     }
 
     skipGame(isDeathLink = false) {
         if (!this.chosenCharacter || this.gameMode === 'daily') return;
-        
+
         this.timer.stopTimer();
-        
+
         const gamePlayElement = document.getElementById('game-play');
         const gameOverElement = document.getElementById('game-over');
         const gameOverMessageElement = document.getElementById('game-over-message');
@@ -683,20 +685,20 @@ export default class GameApp {
         const seedContainer = document.getElementById('game-seed-container');
         const gameSeedElement = document.getElementById('game-seed');
         const emojiGridElement = document.getElementById('emoji-grid');
-        
+
         if (gamePlayElement) gamePlayElement.classList.add('hidden');
         if (gameOverElement) gameOverElement.classList.remove('hidden');
-        
+
         if (gameOverMessageElement) {
-            gameOverMessageElement.textContent = isDeathLink ? 
-                'Game Over - Death Link forced skip!' : 
+            gameOverMessageElement.textContent = isDeathLink ?
+                'Game Over - Death Link forced skip!' :
                 'Game skipped!';
         }
-        
+
         if (correctCharacterElement) {
             correctCharacterElement.textContent = this.chosenCharacter.name;
         }
-        
+
         if (seedContainer && gameSeedElement) {
             if (this.gameMode === 'daily') {
                 seedContainer.classList.add('hidden');
@@ -709,7 +711,7 @@ export default class GameApp {
         if (emojiGridElement) {
             emojiGridElement.textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
         }
-        
+
         this.results.copyResultsTable();
         this.ui.removeDailyElements();
 
@@ -728,16 +730,16 @@ export default class GameApp {
 
     async handleCorrectGuess() {
         this.timer.stopTimer();
-        
+
         if (this.isStreakMode) {
             this.previousWinner = this.chosenCharacter.name;
         }
-        
+
         if (this.gameMode === 'daily') {
             const today = new Date().toISOString().split('T')[0];
             const dailyNumber = this.ui.getDailyChallengeNumber();
             const completionTime = this.timer.getElapsedTime();
-            
+
             // Save completion to cache
             this.saveDailyChallengeCache({
                 completed: true,
@@ -746,7 +748,7 @@ export default class GameApp {
                 completionTime: completionTime,
                 inProgress: false
             });
-            
+
             try {
                 // Use authenticated call if possible, fallback to RPC
                 if (this.isDiscordAuthenticated) {
@@ -812,7 +814,7 @@ export default class GameApp {
                 this.currentSeed
             );
         }
-        
+
         document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
         this.results.copyResultsTable();
     }
@@ -821,7 +823,7 @@ export default class GameApp {
         this.timer.stopTimer();
         const finalStreak = this.streakCount;
         const finalPoints = this.streakPoints;
-        
+
         this.ui.showGameOver(
             `Game Over! Your streak ends at ${finalStreak}!`,
             this.chosenCharacter.name,
@@ -851,13 +853,13 @@ export default class GameApp {
         document.getElementById('game-setup').classList.remove('hidden');
         this.results.clearResults();
         this.timer.reset();
-        
+
         this.guessHistory = [];
         window.gameMode = null;
-        
+
         // Clear Discord guess history
         this.discord.clearGuesses();
-        
+
         if (this.isStreakMode) {
             const currentStreak = this.streakCount;
             const currentPoints = this.streakPoints;
@@ -885,14 +887,14 @@ export default class GameApp {
         try {
             const characterInput = document.getElementById('character-input');
             const exactName = this.characterSelector.findCharacterName(characterInput.value);
-            
+
             if (!exactName) {
                 alert('Invalid character name, please try again.');
                 return;
             }
 
             const characterSeed = this.generateUniqueSeedForCharacter(exactName);
-            
+
             if (characterSeed) {
                 document.getElementById('seed-result').textContent = characterSeed;
                 document.getElementById('generated-seed').classList.remove('hidden');
@@ -908,26 +910,26 @@ export default class GameApp {
     generateUniqueSeedForCharacter(character) {
         let attempts = 0;
         const maxAttempts = 10000;
-        
+
         while (attempts < maxAttempts) {
             try {
                 const seed = Math.random().toString(36).substring(2, 15);
                 const selectedCharacter = this.characterSelector.selectRandomCharacter('filler', seed);
-                
+
                 if (selectedCharacter.name === character) {
                     const difficulty = selectedCharacter.traits[9];
                     if (difficulty === 'E' || difficulty === 'H' || difficulty === 'F') {
                         return seed;
                     }
                 }
-                
+
                 attempts++;
             } catch (error) {
                 console.warn('Error in seed generation attempt:', error);
                 attempts++;
             }
         }
-        
+
         return null;
     }
 
@@ -973,7 +975,7 @@ export default class GameApp {
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
         document.getElementById('skip-button').classList.remove('hidden');
-        
+
         try {
             this.chosenCharacter = this.characterSelector.selectRandomCharacter('filler', this.currentSeed);
             this.timer.startTimer();
@@ -997,7 +999,7 @@ export default class GameApp {
             window.gameMode = 'daily';
             document.getElementById('game-setup').classList.add('hidden');
             document.getElementById('game-over').classList.remove('hidden');
-            
+
             this.ui.showGameOver(
                 `You've already completed today's challenge!`,
                 cache.character.name,
@@ -1006,11 +1008,11 @@ export default class GameApp {
                 0,
                 cache.completionTime
             );
-            
+
             this.guessHistory = cache.guessHistory;
             document.getElementById('emoji-grid').textContent = this.results.generateEmojiGrid(this.guessHistory.map(g => g.results));
             this.results.displayCachedResults(cache.guessHistory);
-            
+
             // Get current player count from database
             try {
                 const today = new Date().toISOString().split('T')[0];
@@ -1026,7 +1028,7 @@ export default class GameApp {
             } catch (error) {
                 console.error('Error fetching daily player count:', error);
             }
-            
+
             return;
         }
 
@@ -1037,7 +1039,7 @@ export default class GameApp {
         document.getElementById('game-setup').classList.add('hidden');
         document.getElementById('game-play').classList.remove('hidden');
         document.getElementById('skip-button').style.display = 'none';
-        
+
         try {
             this.chosenCharacter = this.characterSelector.selectRandomCharacter('normal', this.currentSeed);
             this.timer.startTimer();
